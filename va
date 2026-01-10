@@ -1,0 +1,5 @@
+export GEMINI_API_KEY="AIzaSyALfBo7WmXulugbsoXPweQhLz3mKztfbRs"
+export HA_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3ZmJmOGYzNWJhYjc0ZTMyYTY5NDcyN2NlNTI3ZjBiMyIsImlhdCI6MTc1Nzg0OTE5NSwiZXhwIjoyMDczMjA5MTk1fQ.J5Diz7VQQl698b1Sh_jdpCefxaCZ69-SW4_yUyoBQgw"
+
+systemctl --user stop voiceassist
+/home/chochko/voiceAssist/.venv/bin/python -m voiceAssist.main

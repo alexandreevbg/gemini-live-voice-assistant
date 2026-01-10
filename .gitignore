@@ -1,0 +1,25 @@
+# Python internals
+__pycache__/
+*.py[cod]
+
+# Virtual Environment (Do not commit this!)
+venv/
+env/
+.env
+
+# IDE settings
+.vscode/
+.idea/
+
+# Project Specific - Ignore generated files and downloaded models
+wifi-config
+PipeWire
+seeed-voicecard
+voiceAssist
+voiceAssist-last
+voiceAssist-live-Cho
+
+# Audio and Model files (unless you specifically want to track them)
+*.txt
+*.wav
+*.onnx
