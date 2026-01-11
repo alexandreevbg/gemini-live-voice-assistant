@@ -48,17 +48,22 @@ Once you find a piper voice model for your language, you can use the appropriate
 - run the notebook stored in the same directory
 
 The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. If you want to use another language, then you can run the same notebook and then:
-- click on **Show code** at the end of the first cell
+- click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
 - find the line starting with "!wget "https://raw.githubusercontent.com/..."
-- replace the link with the link to you url containing your generate_sampled.py script
+- replace the link with the link to you url containing your generate_samples.py script
 - run the cell to create and listen a test example
+- run all cells and download the generated tflite model
 - you can save a copy of the modified notebook and rename it as you want
 
-To run the Bulgarian training notebook directly in Google Colab:
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YourUsername/YourRepositoryName/blob/main/training/OpenWakeWord_model_BG.ipynb)
----
+To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
 
-## 🎙️ Voice Assistant Setup
+Besides the field for target_word, my notebook has a field for target_model_name, to avoid automatic conversion of the target_word to the model file name.
+
+---
+## ⚙️ Prepare the system
+
+
+## 🎙️ Install and run Voice Assistant
 
 ### Prerequisites
 - Python 3.9+
