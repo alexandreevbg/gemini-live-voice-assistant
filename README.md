@@ -24,13 +24,12 @@ Instructions are provided below in the following order:
 - **`wifi_config/`**: Contains a script for a captive portal to configure the WiFi connection
 - **`voice_assist/`**: Contains the main Python scripts for running the Voice Assistant
 - **`patches/`**: System patches
-
 ---
 
 ## 🛠️ Obtaining a wake word model
-There are two options: use a pre-trained model or use your own.
+There are two options: use an already trained model or train your own.
 
-### 1. Use a pre-trained model
+### 1. Use an already trained model
 You can find a large collection of community-trained models (mostly in English) in the following repository:
 https://github.com/fwartner/home-assistant-wakewords-collection
 
@@ -38,7 +37,7 @@ https://github.com/fwartner/home-assistant-wakewords-collection
 To train a custom wake word model in English language, you can use the following Google Colab notebook:
 https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
 
-To train a custom wake word model in other languages supported by Piper, you can use the same notebook with a simple patch that replace the English voice with another one. In the **training/** you will find two python scripts for generating the samples:
+To train a custom wake word model in other languages supported by Piper, you can use the same notebook with a simple patch that replace the English voice with another one. In the **training/** directory you will find two python scripts for generating the samples:
 - **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
 - **generate_samples_onnx.py** - the modified script working with ONNX models
 
@@ -48,32 +47,15 @@ Once you find a piper voice model for your language, you can use the appropriate
 - store the script in some url accessible from Google colab environment (e.g. github gist)
 - run the notebook stored in the same directory
 
-### 3. Train a custom wake word model in Bulgarian
+The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. If you want to use another language, then you can run the same notebook and then:
+- click on **Show code** at the end of the first cell
+- find the line starting with "!wget "https://raw.githubusercontent.com/..."
+- replace the link with the link to you url containing your generate_sampled.py script
+- run the cell to create and listen a test example
+- you can save a copy of the modified notebook and rename it as you want
 
-Based on the following Google Colab notebook:
-https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
-
-To train a custom wake word model in Bulgarian using the OpenWakeWord Colab notebook, you need to patch the sample generation script to use the Bulgarian voice (Dimitar).
-
-### Instructions
-
-1. Open the OpenWakeWord Colab Notebook.
-2. Run the first cell to install dependencies (including `piper-sample-generator`).
-3. **Apply the Patch**: Run the following command in a new cell to replace the default English generator with the Bulgarian one from this repository:
-
-```python
-# Download the patched script
-!wget https://raw.githubusercontent.com/YourUsername/YourRepositoryName/main/training/generate_samples.py
-
-# Move it to the piper_train library location (path may vary slightly based on Colab updates)
-!mv generate_samples.py /usr/local/lib/python3.10/dist-packages/piper_train/
-
-# Install ONNX Runtime (required for the Bulgarian model)
-!pip install onnxruntime
-```
-
-4. Continue running the rest of the notebook cells (installing `openwakeword`, generating clips, and training). The script will automatically download the `bg_BG-dimitar-medium.onnx` voice model.
-
+To run the Bulgarian training notebook directly in Google Colab:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YourUsername/YourRepositoryName/blob/main/training/OpenWakeWord_model_BG.ipynb)
 ---
 
 ## 🎙️ Voice Assistant Setup
