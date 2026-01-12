@@ -30,33 +30,33 @@ The instructions below are arranged in the following sections:
 There are two options: use a pre-trained model or train your own.
 
 ### 1. Use a pre-trained model
-You can find a large collection of community-trained models (mostly in English) in the following repository:
+A large collection of community-trained models (mostly in English) is available in the following repository:
 https://github.com/fwartner/home-assistant-wakewords-collection
 
 ### 2. Train a custom wake word in English
-To train a custom wake word model in English, you can use the following Google Colab notebook:
+To train a custom wake word model in English, use the following Google Colab notebook:
 https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
 
 ### 3. Train a custom wake word in other languages
-To train a custom wake word model in other languages supported by Piper, you can use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **training/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
+To train a custom wake word model in other languages supported by Piper, use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **training/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
 - **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
 - **generate_samples_onnx.py** - the modified script working with ONNX models
 - **generate_samples.py** - the final script to be downloaded by the modified notebook
 
-Once you find a piper voice model for your language, you can use the appropriate Python script as follows:
+Once you find a piper voice model for your language, use the appropriate Python script as follows:
 - make a local copy of the appropriate script on your computer
 - rename it to "generate_samples.py"
 - replace the model name in the script with the name of your desired model
 - store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
 - run the notebook stored in the same directory
 
-The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. If you want to use another language, then you can run the same notebook and then:
+The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
 - click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
 - find the line starting with "!wget "https://raw.githubusercontent.com/..."
 - replace the link on this line with the link to your URL containing your generate_samples.py script
 - run the cell to create and listen to a test example
 - run all cells and download the generated tflite model
-- you can save a copy of the modified notebook and rename it as you want
+- save a copy of the modified notebook and rename it as you want
 
 To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
 
@@ -70,7 +70,7 @@ Preparations include the following installations:
 - Shared virtual environment for Python apps
 - Wi-Fi captive portal for Wi-Fi configuration
 
-If you intend to improve or expand the capabilities of this device beyond the scope of this guide, I recommend that you also install a backup solution.
+If you intend to improve or expand the capabilities of this device beyond the scope of this guide, then I would recommend also to install a backup solution.
 
 ## 1. Install Raspberry Pi OS Lite (64-bit)
 Follow this procedure:
@@ -135,7 +135,7 @@ For **ReSpeaker 2-mic HAT V1.0** (no longer supported by Seeed Studio) follow th
    aplay test.wav
    ```
 ## 3. Install a Shared Virtual Environment for Python Apps
-To optimize performance on the Raspberry Pi Zero 2W, we use a "hybrid" environment strategy. We install heavy libraries (like numpy and gpiozero) globally via `apt` to save installation time and disk space, and then create a shared virtual environment that can access them.
+To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment strategy: install heavy libraries (like numpy and gpiozero) globally via `apt` to save installation time and disk space, and then create a shared virtual environment that can access them.
 
 1. Install system dependencies:
    ```bash
@@ -193,7 +193,7 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    sudo mount -t nfs -o proto=tcp,port=2049 192.168.1.5:/nfs/<target directory> /mnt
    sudo RonR-RPi-image-utils/image-backup -o -v
    ```
-   After running the command, enter the name of the target image, then answer 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB.
+   After running the command, enter the name of the target image, then answer 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
    You can restore from the initial or compressed image using Raspberry Pi Imager. 
 
 ## 🎙️ Install and run Voice Assistant
