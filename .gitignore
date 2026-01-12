@@ -14,7 +14,6 @@ env/
 # Project Specific - Ignore generated files and downloaded models
 wifi-config
 PipeWire
-seeed-voicecard
 voiceAssist
 voiceAssist-last
 voiceAssist-live-Cho
@@ -23,3 +22,5 @@ voiceAssist-live-Cho
 *.txt
 *.wav
 *.onnx
+*.sch
+*.brd

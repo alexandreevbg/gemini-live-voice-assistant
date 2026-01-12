@@ -11,20 +11,20 @@ This project contains instructions, tools and source code for creating a Multili
 - Optional integration with **Home Assistant**
 - Optional integration with **other services**
 
-The assistant is designed to be run on a Raspberry Pi Zero 2W with a Seeed Studio ReSpeaker 2-mic HAT.
-
-Instructions are provided below in the following order:
-- **Obtaining a wake word model** - get already trained model or create your own
-- **Prepare the system** - install required packages and apply patches
-- **Install and run the assistant** - install the python code and run the assistant
-- **Create 3D-printed enclosure** - 3D printed models and interconnections
+The assistant is designed to be run on a **Raspberry Pi Zero 2W** accompanied with a **Seeed Studio ReSpeaker 2-mic HAT**.
 
 ## Repository Structure
 - **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord model in non-English languages
 - **`wifi_config/`**: Contains a script for a captive portal to configure the WiFi connection
 - **`voice_assist/`**: Contains the main Python scripts for running the Voice Assistant
 - **`patches/`**: System patches
----
+
+## Instructions
+The instructions below are provided in the following order:
+- **Obtaining a wake word model** - get already trained model or create your own
+- **Prepare the system** - install required packages and apply patches
+- **Install and run the assistant** - install the python code and run the assistant
+- **Create 3D-printed enclosure** - 3D printed models and interconnections
 
 ## 🛠️ Obtaining a wake word model
 There are two options: use an already trained model or train your own.
@@ -61,7 +61,136 @@ Besides the field for target_word, my notebook has a field for target_model_name
 
 ---
 ## ⚙️ Prepare the system
+Preparations include the following installations:
+- Raspberry Pi OS Lite (64-bit)
+- Drivers for ReSpeaker 2-mic
+- Shared virtual environment for Python apps
+- Wi-Fi captive portal for wifi configuration
 
+If you intend to improve or expand the capabilities of this device beyond the scope of this instruction, I recommend that you also install a backup solution.
+
+## 1. Install Raspberry Pi OS Lite (64-bit)
+I followed this procedure:
+- Install and run **Raspberry Pi Imager** on your Windows, macOS, or Linux computer
+- For device select **Raspberry Pi Zero 2W**
+- For OS select Raspberry Pi OS (other) and then **Raspberry Pi OS Lite (64-bit)**
+- For storage select your SD-Card connected to USB port
+- Decide the hostname of the device (I used "chocko")
+- Populate Localization and credentials parameters
+- Enter the initial connection parameters for your Wi-Fi
+- Enable the SSH connection
+
+At the time of writing this instruction, the latest version of Raspberry Pi OS Lite (64-bit) was **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.13.5**
+
+## 2. Install Drivers for ReSpeaker 2-mic HAT
+First check the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
+
+For **Respeker 2-mic HAT V2.0** (still supported by Seeed Studio) follow the instructions provided by Seeed Studio: 
+https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi
+
+For **Respeker 2-mic HAT V1.0** (not supported by Seeed Studio anymore) follow the instructions below: 
+1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
+2. Get the updated driver sources from HinTak: 
+   ```bash
+   cd ~
+   git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
+   ```
+3. Patch the file seeed-voicecard.c there
+   ```bash
+   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/seeed-voicecard.c
+   mv ~/seeed-voicecard/seeed-voicecard.c ~/seeed-voicecard/
+   ```
+4. Run drivers installation
+   ```bash
+   cd ~/seeed-voicecard
+   sudo ./install.sh
+   ```
+**For both versions:** To simplify Voice Assistant's audio configuration, we decided to disable HDMI audio available in Raspberry Pi and make ReSpeaker the only one audio device in the system. Also, since we do not intend to use Bluetooth, we disabled it as well. For this:
+1. Edit the syste config.txt file:
+   ```bash
+   sudo nano /boot/firmware/config.txt
+   ```
+   Change the following lines:
+   ```bash
+   dtparam=audio=off
+   dtoverlay=vc4-kms-v3d,noaudio
+   ```
+   Add the following lines to the end of the file:
+   ```bash
+   dtoverlay=disable-bt             # suspend bluetooth if not used
+   dtoverlay=seeed-2mic-voicecard
+   ```
+   Save changes and reboot: 
+   ```bash
+   sudo reboot
+   ```
+2. Final test for ReSpeaker with ALSA
+   ```bash
+   alsamixer   # set Speaker = 75% and Capture = 75%
+   sudo alsactl store
+   arecord -r 16000 -c 1 -fS16_LE -t wav -d 5 test.wav
+   aplay test.wav
+   ```
+## 3. Install a Shared Virtual Environment for Python Apps
+To optimize performance on the Raspberry Pi Zero 2W, we use a "hybrid" environment strategy. We install heavy libraries (like numpy and gpiozero) globally via `apt` to save installation time and disk space, and then create a shared virtual environment that can access them.
+
+1. Install system dependencies:
+   ```bash
+   sudo apt update
+   sudo apt install git build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
+   ```
+2. Create the shared virtual environment:
+   ```bash
+   python3 -m venv --system-site-packages ~/env
+   ```
+   This environment (`~/env`) will be used by both the Wi-Fi portal and the Voice Assistant.
+
+## 4. Install Wi-Fi Captive Portal for WiFi Configuration
+The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Groove port on Respeaker 2-mic. Pressing both buttons together during the system boot activates the Wi-Fi captive portal having:
+- SSID: "Chochko-WiFi-Setup" 
+- password: "chochko123"
+- the portal is available on standard address 192.168.4.1
+You can open the portal with your phone or computer, select new SSID from a list, and populate the password, all to be used after automatic reboot. If the new SSID disappeared, then after next reboot Voice Assistant will try to connect to the previous SSID.
+
+1. Install the Wi-Fi config application
+   ```bash
+   cd ~
+   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git temp-repo
+   mv temp-repo/wifi-config ~/
+   rm -rf temp-repo
+   ```
+2. Install the LED driver library into the shared environment:
+   ```bash
+   ~/env/bin/pip install apa102-pi
+   ```
+3. Run and test the wifi-config manually
+   ```bash
+   sudo python ~/wifi-config/wifi_portal.py
+   ```
+4. Create a oneshot service for the portal
+   ```bash
+   sudo cp wifi-config/wifi-config.service /etc/systemd/system/
+   sudo systemctl enable wifi-config.service
+   sudo systemctl start wifi-config.service
+   ```
+   
+## 5. Install a Backup Solution (optional)
+For a backup solution we decided to use **RonR-RPi-image-utils** that creates a complete backup of a Raspberry Pi quickly and efficiently; these backups are rendered in the form of an "image file". 
+
+1. Install NFS and the backup application
+   ```bash
+   sudo apt update
+   sudo apt install nfs-common install git -y
+   git clone https://github.com/seamusdemora/RonR-RPi-image-utils
+   sudo install --mode=755 ./RonR-RPi-image-utils/image-* /usr/local/sbin
+   ```
+2. Mount an external drive where to store the image and run backup
+   ```bash
+   sudo mount -t nfs -o proto=tcp,port=2049 192.168.1.5:/nfs/<target directory> /mnt
+   sudo RonR-RPi-image-utils/image-backup -o -v
+   ```
+   After running the command, enter the name of the target image, then answer 'y' on the next questions and that's it. The result image is less than 4 GB. You may compress it by 7-Zip to *.img.xy file with less than 1 GB size.
+   You can restore from the initial or compressed image by Rasbperri Pi Imager. 
 
 ## 🎙️ Install and run Voice Assistant
 
