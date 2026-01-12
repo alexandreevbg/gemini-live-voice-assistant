@@ -33,16 +33,20 @@ There are two options: use an already trained model or train your own.
 You can find a large collection of community-trained models (mostly in English) in the following repository:
 https://github.com/fwartner/home-assistant-wakewords-collection
 
-### 2. Train a custom wake word model
+### 2. Train an English custom wake word
 To train a custom wake word model in English language, you can use the following Google Colab notebook:
 https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
 
-To train a custom wake word model in other languages supported by Piper, you can use the same notebook with a simple patch that replace the English voice with another one. In the **training/** directory you will find two python scripts for generating the samples:
+### 3. Train a non-English custom wake word
+To train a custom wake word model in other languages supported by Piper, you can use the same notebook with a little modification and a patch that replace the English voice with another one. In the **training/** directory you will find the modified notebook, as well as three python scripts for generating the samples:
+
 - **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
 - **generate_samples_onnx.py** - the modified script working with ONNX models
+- **generate_samples.py** - the final script to be downloaded by the modified notebook
 
 Once you find a piper voice model for your language, you can use the appropriated python script as follows:
-- make a local copy of this script on your computer
+- make a local copy of the appropriated script on your computer
+- rename it to "generate_samples.py"
 - replace the model name in the script with the name of your desired model
 - store the script in some url accessible from Google colab environment (e.g. github gist)
 - run the notebook stored in the same directory
@@ -173,6 +177,7 @@ You can open the portal with your phone or computer, select new SSID from a list
    sudo systemctl enable wifi-config.service
    sudo systemctl start wifi-config.service
    ```
+Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
    
 ## 5. Install a Backup Solution (optional)
 For a backup solution we decided to use **RonR-RPi-image-utils** that creates a complete backup of a Raspberry Pi quickly and efficiently; these backups are rendered in the form of an "image file". 

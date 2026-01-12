@@ -1,0 +1,13 @@
+[Unit]
+Description=Wi-Fi Configuration Portal
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/home/chochko/wifi-config
+ExecStart=/usr/bin/python3 /home/chochko/wifi-config/wifi_portal.py
+
+[Install]
+WantedBy=multi-user.target
