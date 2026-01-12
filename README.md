@@ -18,9 +18,9 @@ The assistant is designed to be run on a **Raspberry Pi Zero 2W** accompanied wi
 - **`wifi_config/`**: Contains a script for a captive portal to configure the WiFi connection
 - **`voice_assist/`**: Contains the main Python scripts for running the Voice Assistant
 - **`patches/`**: System patches
-
-## Instructions
-The instructions below are provided in the following order:
+---
+# Instructions
+The instructions below are arranged in the following sections:
 - **Obtaining a wake word model** - get already trained model or create your own
 - **Prepare the system** - install required packages and apply patches
 - **Install and run the assistant** - install the python code and run the assistant
