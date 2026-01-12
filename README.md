@@ -92,7 +92,8 @@ For **ReSpeaker 2-mic HAT V2.0** (still supported by Seeed Studio) follow the in
 ```bash
 ## Install kernel 
 sudo apt update
-sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev raspberrypi-kernel-headers git -y
+sudo apt install raspberrypi-kernel-headers
+sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git -y
 git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
 
 ## Make target directory
