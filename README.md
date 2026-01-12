@@ -88,8 +88,67 @@ At the time of writing, the latest version of Raspberry Pi OS Lite (64-bit) was 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
 First, check the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
 
-For **ReSpeaker 2-mic HAT V2.0** (still supported by Seeed Studio) follow the instructions provided by Seeed Studio: 
-https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi
+For **ReSpeaker 2-mic HAT V2.0** (still supported by Seeed Studio) follow the instructions below. They are based on the offical Seeed Studio instructions, but with minor modifications to be inline with the current version of the latest OS:
+```bash
+## Install kernel 
+sudo apt update
+sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev raspberrypi-kernel-headers git -y
+git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
+
+## Make target directory
+mkdir ~/tlv320aic3x_i2c_driver
+cd ~/tlv320aic3x_i2c_driver
+## Copy code
+cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
+cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
+cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
+## Modify Makefile
+nano Makefile
+-------------------
+obj-m += snd-soc-tlv320aic3x-i2c.o
+snd-soc-tlv320aic3x-i2c-objs := tlv320aic3x.o tlv320aic3x-i2c.o
+
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+        $(MAKE) -C $(KDIR) M=$(PWD) modules
+
+clean:
+        $(MAKE) -C $(KDIR) M=$(PWD) clean
+
+install:
+        sudo cp snd-soc-tlv320aic3x-i2c.ko /lib/modules/$(shell uname -r)/kernel/sound/soc/codecs/
+        sudo depmod -a
+
+-------------------
+
+## Compile the driver 
+make
+sudo make install
+sudo modprobe snd-soc-tlv320aic3x-i2c
+
+## Check logs
+lsmod | grep tlv320
+dmesg | grep tlv320
+
+```
+
+1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
+2. Get the updated driver sources from Seeed Studio: 
+   ```bash
+   cd ~
+   git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
+   ```
+3. Patch the file seeed-voicecard.c file
+   ```bash
+
+
+
+
+
+
+The official instructions are: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi
 
 For **ReSpeaker 2-mic HAT V1.0** (no longer supported by Seeed Studio) follow the instructions below: 
 1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
