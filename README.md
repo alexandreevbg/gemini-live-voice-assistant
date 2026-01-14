@@ -72,8 +72,8 @@ Preparations include the following installations:
 
 If you intend to improve or expand the capabilities of this device beyond the scope of this guide, then I would recommend also to install a backup solution.
 
-## 1. Install Raspberry Pi OS Lite (64-bit)
-Follow this procedure:
+## 1. Install Raspberry Pi OS (64-bit) Lite
+Follow this procedure to install the latest Raspberry Pi OS:
 - Install and run **Raspberry Pi Imager** on your Windows, macOS, or Linux computer
 - For the device, select **Raspberry Pi Zero 2W**
 - For the OS, select **Raspberry Pi OS (other)** and then **Raspberry Pi OS Lite (64-bit)**
@@ -81,77 +81,55 @@ Follow this procedure:
 - Decide the hostname of the device (I used "chocko")
 - Configure Localization and credentials parameters
 - Enter the initial connection parameters for your Wi-Fi
-- Enable the SSH connection
+- Enable the SSH connection and write OS on SD-Card
+- Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
 
 At the time of writing, the latest version of Raspberry Pi OS Lite (64-bit) was **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.13.5**
 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
-First, check the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
+First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
 
-For **ReSpeaker 2-mic HAT V2.0** (still supported by Seeed Studio) follow the instructions below. They are based on the offical Seeed Studio instructions, but with minor modifications to be inline with the current version of the latest OS:
-```bash
-## Install kernel 
-sudo apt update
-sudo apt install raspberrypi-kernel-headers
-sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git -y
-git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
-
-## Make target directory
-mkdir ~/tlv320aic3x_i2c_driver
-cd ~/tlv320aic3x_i2c_driver
-## Copy code
-cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
-cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
-cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
-## Modify Makefile
-nano Makefile
--------------------
-obj-m += snd-soc-tlv320aic3x-i2c.o
-snd-soc-tlv320aic3x-i2c-objs := tlv320aic3x.o tlv320aic3x-i2c.o
-
-KDIR := /lib/modules/$(shell uname -r)/build
-PWD := $(shell pwd)
-
-all:
-        $(MAKE) -C $(KDIR) M=$(PWD) modules
-
-clean:
-        $(MAKE) -C $(KDIR) M=$(PWD) clean
-
-install:
-        sudo cp snd-soc-tlv320aic3x-i2c.ko /lib/modules/$(shell uname -r)/kernel/sound/soc/codecs/
-        sudo depmod -a
-
--------------------
-
-## Compile the driver 
-make
-sudo make install
-sudo modprobe snd-soc-tlv320aic3x-i2c
-
-## Check logs
-lsmod | grep tlv320
-dmesg | grep tlv320
-
-```
-
+For **ReSpeaker 2-mic HAT V2.0**, follow:
+-  the original instruction provided by Seeed Studio at https: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
+**or**
+- the compact version of the same, aligned with the latest Raspberry Pi OS:
 1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
-2. Get the updated driver sources from Seeed Studio: 
+2. Build the driver for audio codec TLV320AIC3104:
    ```bash
-   cd ~
-   git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
+   ## Install kernel
+   sudo apt update
+   sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git -y
+   git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
+   mkdir ~/tlv320aic3x_i2c_driver
+   cd ~/tlv320aic3x_i2c_driver
+
+   ## Copy code and a Makefile
+   cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
+   cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
+   cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
+   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
+   mv ~/Makefile ~/tlv320aic3x_i2c_driver/
+
+   ## Compile the driver 
+   cd ~/tlv320aic3x_i2c_driver
+   make
+   sudo make install
+   sudo modprobe snd-soc-tlv320aic3x-i2c
+
+   ## Check logs
+   lsmod | grep tlv320
+   dmesg | grep tlv320
    ```
-3. Patch the file seeed-voicecard.c file
+3. Add overlay configuration to config.txt:
    ```bash
+   sudo nano /boot/firmware/config.txt
+   ```
+   Add the following line to the end of the file:
+   ```bash
+   dtoverlay=respeaker-2mic-v2_0-overlay
+   ```
 
-
-
-
-
-
-The official instructions are: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi
-
-For **ReSpeaker 2-mic HAT V1.0** (no longer supported by Seeed Studio) follow the instructions below: 
+For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below: 
 1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
 2. Get the updated driver sources from HinTak: 
    ```bash
@@ -163,12 +141,21 @@ For **ReSpeaker 2-mic HAT V1.0** (no longer supported by Seeed Studio) follow th
    wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/seeed-voicecard.c
    mv ~/seeed-voicecard/seeed-voicecard.c ~/seeed-voicecard/
    ```
-4. Run drivers installation
+4. Build and install the driver
    ```bash
    cd ~/seeed-voicecard
    sudo ./install.sh
    ```
-**For both versions:** To simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's HDMI audio, making the ReSpeaker the sole audio device. Additionally, since Bluetooth is not used, disable it as well. For this:
+5. Add overlay configuration to config.txt:
+   ```bash
+   sudo nano /boot/firmware/config.txt
+   ```
+   Add the following line to the end of the file:
+   ```bash
+   dtoverlay=seeed-2mic-voicecard
+   ```
+
+**For both versions:** To simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's onboard HDMI audio, making the ReSpeaker the sole audio device. Also, since Bluetooth is not used, disable it as well. For this:
 1. Edit the system config.txt file:
    ```bash
    sudo nano /boot/firmware/config.txt
@@ -178,10 +165,9 @@ For **ReSpeaker 2-mic HAT V1.0** (no longer supported by Seeed Studio) follow th
    dtparam=audio=off
    dtoverlay=vc4-kms-v3d,noaudio
    ```
-   Add the following lines to the end of the file:
+   And add the following line to the end of the file:
    ```bash
    dtoverlay=disable-bt             # disable bluetooth if not used
-   dtoverlay=seeed-2mic-voicecard
    ```
    Save changes and reboot: 
    ```bash
