@@ -76,7 +76,8 @@ If you intend to improve or expand the capabilities of this device beyond the sc
 Follow this procedure to install the latest Raspberry Pi OS:
 - Install and run **Raspberry Pi Imager** on your Windows, macOS, or Linux computer
 - For the device, select **Raspberry Pi Zero 2W**
-- For the OS, select **Raspberry Pi OS (other)** and then **Raspberry Pi OS Lite (64-bit)**
+- For the OS, select **Raspberry Pi OS (other)** and then **Raspberry Pi OS (Legacy, 64-bit) Lite**.
+  > [IMPORTANT]: As of mid-2024, the standard "Raspberry Pi OS Lite" points to an unstable testing version (Debian Trixie). The "Legacy" version points to the required **stable** version (Debian Bookworm), which is necessary for driver compatibility.
 - For the storage, select your SD-Card connected to USB port
 - Decide the hostname of the device (I used "chocko")
 - Configure Localization and credentials parameters
@@ -84,7 +85,7 @@ Follow this procedure to install the latest Raspberry Pi OS:
 - Enable the SSH connection and write OS on SD-Card
 - Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
 
-At the time of writing, the latest version of Raspberry Pi OS Lite (64-bit) was **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.13.5**
+At the time of writing, the stable Raspberry Pi OS Lite (64-bit) is based on **Debian 12 (Bookworm)**, running Kernel **~6.6.x** with preinstalled **Python 3.11.x**.
 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
 First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
@@ -92,26 +93,25 @@ First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudi
 For **ReSpeaker 2-mic HAT V2.0**, follow:
 -  the original instruction provided by Seeed Studio at https: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
 **or**
-- the compact version of the same, aligned with the latest Raspberry Pi OS:
+- the compact version of the same, aligned to the latest Raspberry Pi OS:
 1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
 2. Build the driver for audio codec TLV320AIC3104:
    ```bash
    ## Install kernel
    sudo apt update
+   sudo apt install raspberrypi-kernel-headers -y
    sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git -y
    git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
-   mkdir ~/tlv320aic3x_i2c_driver
-   cd ~/tlv320aic3x_i2c_driver
 
    ## Copy code and a Makefile
+   mkdir ~/tlv320aic3x_i2c_driver
+   cd ~/tlv320aic3x_i2c_driver
    cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
    cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
    cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
    wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
-   mv ~/Makefile ~/tlv320aic3x_i2c_driver/
 
    ## Compile the driver 
-   cd ~/tlv320aic3x_i2c_driver
    make
    sudo make install
    sudo modprobe snd-soc-tlv320aic3x-i2c
