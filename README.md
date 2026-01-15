@@ -85,23 +85,22 @@ Follow this procedure to install the latest Raspberry Pi OS:
 - Enable the SSH connection and write OS on SD-Card
 - Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
 
-At the time of writing, the stable Raspberry Pi OS Lite (64-bit) is based on **Debian 12 (Bookworm)**, running Kernel **~6.6.x** with preinstalled **Python 3.11.x**.
+At the time of writing, the stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
 First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
 
-For **ReSpeaker 2-mic HAT V2.0**, follow:
--  the original instruction provided by Seeed Studio at https: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
+For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Seeed Studio, and you can follow it if you can make some minor changes on the fly: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
 **or**
-- the compact version of the same, aligned to the latest Raspberry Pi OS:
+- follow the compact version of the same, aligned to the latest Raspberry Pi OS:
 1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
 2. Build the driver for audio codec TLV320AIC3104:
    ```bash
    ## Install kernel
    sudo apt update
    sudo apt install raspberrypi-kernel-headers -y
-   sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git -y
-   git clone --depth=1 --branch rpi-6.6.y https://github.com/raspberrypi/linux.git
+   sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git device-tree-compiler -y
+   git clone --depth=1 --branch rpi-6.12.y https://github.com/raspberrypi/linux.git
 
    ## Copy code and a Makefile
    mkdir ~/tlv320aic3x_i2c_driver
@@ -110,6 +109,11 @@ For **ReSpeaker 2-mic HAT V2.0**, follow:
    cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
    cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
    wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
+
+   ## Compile and install the overlay
+   wget https://raw.githubusercontent.com/Seeed-Studio/seeed-voicecard/master/respeaker-2mic-v2_0.dts
+   dtc -@ -I dts -O dtb -o respeaker-2mic-v2_0.dtbo respeaker-2mic-v2_0.dts
+   sudo cp respeaker-2mic-v2_0.dtbo /boot/firmware/overlays/
 
    ## Compile the driver 
    make
@@ -175,8 +179,9 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
    ```
 2. Final test for ReSpeaker with ALSA
    ```bash
+   aplay -l          # you should see only the ReSpeaker device
+   arecord -l        # same
    alsamixer   # set Speaker = 75% and Capture = 75%
-   sudo alsactl store
    arecord -r 16000 -c 1 -fS16_LE -t wav -d 5 test.wav
    aplay test.wav
    ```
