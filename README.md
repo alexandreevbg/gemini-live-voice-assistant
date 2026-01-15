@@ -110,12 +110,7 @@ For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Se
    cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
    wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
 
-   ## Compile and install the overlay
-   wget https://raw.githubusercontent.com/Seeed-Studio/seeed-voicecard/master/respeaker-2mic-v2_0.dts
-   dtc -@ -I dts -O dtb -o respeaker-2mic-v2_0.dtbo respeaker-2mic-v2_0.dts
-   sudo cp respeaker-2mic-v2_0.dtbo /boot/firmware/overlays/
-
-   ## Compile the driver 
+   ## Build the driver 
    make
    sudo make install
    sudo modprobe snd-soc-tlv320aic3x-i2c
@@ -124,7 +119,15 @@ For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Se
    lsmod | grep tlv320
    dmesg | grep tlv320
    ```
-3. Add overlay configuration to config.txt:
+3. Install the overlay
+   ```bash
+   curl https://raw.githubusercontent.com/Seeed-Studio/seeed-linux-dtoverlays/refs/heads/master/overlays/rpi/respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dts
+   dtc -I dts respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dtbo
+   sudo dtoverlay respeaker-2mic-v2_0-overlay.dtbo
+   sudo cp respeaker-2mic-v2_0-overlay.dtbo /boot/firmware/overlays
+   ```
+
+4. Add overlay configuration to config.txt:
    ```bash
    sudo nano /boot/firmware/config.txt
    ```
@@ -179,9 +182,9 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
    ```
 2. Final test for ReSpeaker with ALSA
    ```bash
-   aplay -l          # you should see only the ReSpeaker device
-   arecord -l        # same
-   alsamixer   # set Speaker = 75% and Capture = 75%
+   aplay -l          # you should see only the seeed2mic... device
+   arecord -l        # as card 0
+   alsamixer         # set Speaker and Capture = 75%
    arecord -r 16000 -c 1 -fS16_LE -t wav -d 5 test.wav
    aplay test.wav
    ```
