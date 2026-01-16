@@ -193,12 +193,20 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
    ```bash
    sudo apt update
    sudo apt install git build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
+   cd ~
+   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git temp-repo
    ```
 2. Create the shared virtual environment:
    ```bash
    python3 -m venv --system-site-packages ~/.venv
    ```
    This environment (`~/.venv`) will be used by both the Wi-Fi portal and the Voice Assistant.
+
+3. Get software packages for the Voice Assistant:
+   ```bash
+   cd ~
+   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git
+   ```
 
 ## 4. Install Wi-Fi Captive Portal for WiFi Configuration
 The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Grove port on ReSpeaker 2-mic. Pressing and holding both buttons during system boot activates the Wi-Fi captive portal having:
