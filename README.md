@@ -93,8 +93,7 @@ First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudi
 For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Seeed Studio, and you can follow it if you can make some minor changes on the fly: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
 **or**
 - follow the compact version of the same, aligned to the latest Raspberry Pi OS:
-1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
-2. Build the driver for audio codec TLV320AIC3104:
+1. Build the driver for audio codec TLV320AIC3104:
    ```bash
    ## Install kernel
    sudo apt update
@@ -119,7 +118,7 @@ For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Se
    lsmod | grep tlv320
    dmesg | grep tlv320
    ```
-3. Install the overlay
+2. Install the overlay
    ```bash
    curl https://raw.githubusercontent.com/Seeed-Studio/seeed-linux-dtoverlays/refs/heads/master/overlays/rpi/respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dts
    dtc -I dts respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dtbo
@@ -127,7 +126,7 @@ For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Se
    sudo cp respeaker-2mic-v2_0-overlay.dtbo /boot/firmware/overlays
    ```
 
-4. Add overlay configuration to config.txt:
+3. Add overlay configuration to config.txt:
    ```bash
    sudo nano /boot/firmware/config.txt
    ```
@@ -137,23 +136,22 @@ For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Se
    ```
 
 For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below: 
-1. Mount/connect the Respeaker 2-mic HAT to the Raspberry Pi Zero 2W
-2. Get the updated driver sources from HinTak: 
+1. Get the updated driver sources from HinTak: 
    ```bash
    cd ~
    git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
    ```
-3. Patch the file seeed-voicecard.c file
+2. Patch the file seeed-voicecard.c file
    ```bash
    wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/seeed-voicecard.c
    mv ~/seeed-voicecard/seeed-voicecard.c ~/seeed-voicecard/
    ```
-4. Build and install the driver
+3. Build and install the driver
    ```bash
    cd ~/seeed-voicecard
    sudo ./install.sh
    ```
-5. Add overlay configuration to config.txt:
+4. Add overlay configuration to config.txt:
    ```bash
    sudo nano /boot/firmware/config.txt
    ```
