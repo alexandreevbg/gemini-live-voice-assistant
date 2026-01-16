@@ -196,9 +196,9 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
    ```
 2. Create the shared virtual environment:
    ```bash
-   python3 -m venv --system-site-packages ~/env
+   python3 -m venv --system-site-packages ~/.venv
    ```
-   This environment (`~/env`) will be used by both the Wi-Fi portal and the Voice Assistant.
+   This environment (`~/.venv`) will be used by both the Wi-Fi portal and the Voice Assistant.
 
 ## 4. Install Wi-Fi Captive Portal for WiFi Configuration
 The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Grove port on ReSpeaker 2-mic. Pressing and holding both buttons during system boot activates the Wi-Fi captive portal having:
@@ -216,8 +216,8 @@ You can open the portal with your phone or computer, select a new SSID from the 
    ```
 2. Install the LED driver library into the shared environment:
    ```bash
-   ~/env/bin/pip install --upgrade pip setuptools
-   ~/env/bin/pip install apa102-pi
+   ~/.venv/bin/pip install --upgrade pip setuptools
+   ~/.venv/bin/pip install apa102-pi
    ```
 3. Enable SPI interface in the Raspberry Pi configuration:
    ```bash
@@ -226,7 +226,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    Select "Interfacing Options" -> "SPI" -> "Yes".
 4. Run and test the Wi-Fi configuration manually
    ```bash
-   sudo ~/env/bin/python ~/wifi-config/wifi_portal.py
+   sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
    ```
 5. Create a one-shot service for the portal
    ```bash
@@ -244,7 +244,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    Type=oneshot
    User=root
    WorkingDirectory=/home/chochko/wifi-config
-   ExecStart=/home/chochko/env/bin/python /home/chochko/wifi-config/wifi_portal.py
+   ExecStart=/home/chochko/.venv/bin/python /home/chochko/wifi-config/wifi_portal.py
 
    [Install]
    WantedBy=multi-user.target
@@ -284,9 +284,9 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    ```
 Install the required math libraries and Gemini API
    ```bash
-   ~/env/bin/pip install --upgrade pip setuptools wheel
-   ~/env/bin/pip install "numpy<2" tflite-runtime
-   ~/env/bin/pip install pyaudio
-   ~/env/bin/pip cache purge
-   ~/env/bin/pip install -q -U google-genai
+   ~/.venv/bin/pip install --upgrade pip setuptools wheel
+   ~/.venv/bin/pip install "numpy<2" tflite-runtime
+   ~/.venv/bin/pip install pyaudio
+   ~/.venv/bin/pip cache purge
+   ~/.venv/bin/pip install -q -U google-genai
    ```
