@@ -206,7 +206,7 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
 The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Grove port on ReSpeaker 2-mic. Pressing and holding both buttons during system boot activates the Wi-Fi captive portal having:
 - SSID: "Chochko-WiFi-Setup" 
 - password: "chochko123"
-- the portal is available on standard address 192.168.4.1
+- the portal is available on the standard address 192.168.4.1
 You can open the portal with your phone or computer, select a new SSID from the list, and enter the password. These settings will be used after an automatic reboot. If the new SSID is unavailable, the Voice Assistant will attempt to connect to the previous SSID after the next reboot.
 
 1. Install the Wi-Fi config application
@@ -218,17 +218,42 @@ You can open the portal with your phone or computer, select a new SSID from the 
    ```
 2. Install the LED driver library into the shared environment:
    ```bash
+   ~/env/bin/pip install --upgrade pip setuptools
    ~/env/bin/pip install apa102-pi
    ```
-3. Run and test the Wi-Fi configuration manually
+3. Enable SPI interface in the Raspberry Pi configuration:
    ```bash
-   sudo python ~/wifi-config/wifi_portal.py
+   sudo raspi-config
    ```
-4. Create a one-shot service for the portal
+   Select "Interfacing Options" -> "SPI" -> "Yes".
+4. Run and test the Wi-Fi configuration manually
    ```bash
-   sudo cp wifi-config/wifi-config.service /etc/systemd/system/
+   sudo ~/env/bin/python ~/wifi-config/wifi_portal.py
+   ```
+5. Create a one-shot service for the portal
+   ```bash
+   sudo nano /etc/systemd/system/wifi-config.service
+   ```
+   Add the following content to the file. This service runs as `root` after the network comes online, executing the portal script from the correct directory and using the Python virtual environment.
+   > **Note**: Replace `chochko` with your actual username if it's different.
+   ```ini
+   [Unit]
+   Description=Wi-Fi Configuration Portal
+   Wants=network-online.target
+   After=network-online.target
+
+   [Service]
+   Type=oneshot
+   User=root
+   WorkingDirectory=/home/chochko/wifi-config
+   ExecStart=/home/chochko/env/bin/python /home/chochko/wifi-config/wifi_portal.py
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   Then, enable the service to run on boot:
+   ```bash
    sudo systemctl enable wifi-config.service
-   sudo systemctl start wifi-config.service
    ```
 Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
    
@@ -244,10 +269,26 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    ```
 2. Mount an external drive to store the image and run backup
    ```bash
-   sudo mount -t nfs -o proto=tcp,port=2049 192.168.1.5:/nfs/<target directory> /mnt
-   sudo RonR-RPi-image-utils/image-backup -o -v
+   sudo mount -t nfs -o proto=tcp,port=2049 <NAS IP address>/<target directory> /mnt
+   sudo image-backup -o -v
    ```
-   After running the command, enter the name of the target image, then answer 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
+   After running the command, enter the name of the target image to /mnt/<target directory>, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
    You can restore from the initial or compressed image using Raspberry Pi Imager. 
 
 ## 🎙️ Install and run Voice Assistant
+ ## 1. Install libraries
+ Install the required Python libraries
+   ```bash
+   sudo apt update
+   sudo apt install -y python3-pip python3-dev
+   sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0   
+   sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0 libopenblas-dev
+   ```
+Install the required math libraries and Gemini API
+   ```bash
+   ~/env/bin/pip install --upgrade pip setuptools wheel
+   ~/env/bin/pip install "numpy<2" tflite-runtime
+   ~/env/bin/pip install pyaudio
+   ~/env/bin/pip cache purge
+   ~/env/bin/pip install -q -U google-genai
+   ```

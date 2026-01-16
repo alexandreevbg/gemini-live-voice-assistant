@@ -7,7 +7,7 @@ After=network-online.target
 Type=oneshot
 User=root
 WorkingDirectory=/home/chochko/wifi-config
-ExecStart=/usr/bin/python3 /home/chochko/wifi-config/wifi_portal.py
+ExecStart=/home/chochko/env/bin/python /home/chochko/wifi-config/wifi_portal.py
 
 [Install]
 WantedBy=multi-user.target
