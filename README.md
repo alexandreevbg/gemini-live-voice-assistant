@@ -212,7 +212,6 @@ You can open the portal with your phone or computer, select a new SSID from the 
    cd ~
    git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git temp-repo
    mv temp-repo/wifi-config ~/
-   rm -rf temp-repo
    ```
 2. Install the LED driver library into the shared environment:
    ```bash
@@ -284,6 +283,9 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    ```
 Install the required math libraries and Gemini API
    ```bash
+   mv temp-repo/voiceAssist ~/
+   rm -rf temp-repo
+
    ~/.venv/bin/pip install --upgrade pip setuptools wheel
    ~/.venv/bin/pip install "numpy<2" tflite-runtime
    ~/.venv/bin/pip install pyaudio
