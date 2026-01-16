@@ -215,27 +215,21 @@ The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in 
 - the portal is available on the standard address 192.168.4.1
 You can open the portal with your phone or computer, select a new SSID from the list, and enter the password. These settings will be used after an automatic reboot. If the new SSID is unavailable, the Voice Assistant will attempt to connect to the previous SSID after the next reboot.
 
-1. Install the Wi-Fi config application
-   ```bash
-   cd ~
-   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git temp-repo
-   mv temp-repo/wifi-config ~/
-   ```
-2. Install the LED driver library into the shared environment:
+1. Install the LED driver library into the shared environment:
    ```bash
    ~/.venv/bin/pip install --upgrade pip setuptools
    ~/.venv/bin/pip install apa102-pi
    ```
-3. Enable SPI interface in the Raspberry Pi configuration:
+2. Enable SPI interface in the Raspberry Pi configuration:
    ```bash
    sudo raspi-config
    ```
    Select "Interfacing Options" -> "SPI" -> "Yes".
-4. Run and test the Wi-Fi configuration manually
+3. Run and test the Wi-Fi configuration manually
    ```bash
    sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
    ```
-5. Create a one-shot service for the portal
+4. Create a one-shot service for the portal
    ```bash
    sudo nano /etc/systemd/system/wifi-config.service
    ```
