@@ -13,7 +13,6 @@ env/
 
 # Project Specific - Ignore generated files and downloaded models
 PipeWire
-voiceAssist
 voiceAssist-last
 voiceAssist-live-Cho
 
