@@ -193,8 +193,6 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
    ```bash
    sudo apt update
    sudo apt install git build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
-   cd ~
-   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git temp-repo
    ```
 2. Create the shared virtual environment:
    ```bash
