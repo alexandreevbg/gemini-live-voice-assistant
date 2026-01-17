@@ -88,11 +88,25 @@ Follow this procedure to install the latest Raspberry Pi OS:
 At the time of writing, the latest stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
-First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
+**First**, to simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's onboard HDMI audio, making the ReSpeaker the sole audio device. Also, since Bluetooth is not used, disable it as well. For this edit the system config.txt file:
+   ```bash
+   sudo nano /boot/firmware/config.txt
+   ```
+   Change the following lines:
+   ```bash
+   dtparam=audio=off
+   dtoverlay=vc4-kms-v3d,noaudio
+   ```
+   And add the following line to the end of the file:
+   ```bash
+   dtoverlay=disable-bt             # disable bluetooth if not used
+   ```
+
+**Second**, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
 
 For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Seeed Studio, and you can follow it if you can make some minor changes on the fly: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
-**or**
-- follow the compact version of the same, aligned to the latest Raspberry Pi OS:
+**or**<br>
+follow the compact version of the same, aligned to the latest Raspberry Pi OS:
 1. Build the driver for audio codec TLV320AIC3104:
    ```bash
    ## Install kernel
@@ -160,28 +174,14 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
    dtoverlay=seeed-2mic-voicecard
    ```
 
-**For both versions:** To simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's onboard HDMI audio, making the ReSpeaker the sole audio device. Also, since Bluetooth is not used, disable it as well. For this:
-1. Edit the system config.txt file:
+**And finally, for both versions**, test the ReSpeaker with ALSA
+1. Check that the only device used by aplay and arecord is named like "seeed2mic..."
    ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Change the following lines:
-   ```bash
-   dtparam=audio=off
-   dtoverlay=vc4-kms-v3d,noaudio
-   ```
-   And add the following line to the end of the file:
-   ```bash
-   dtoverlay=disable-bt             # disable bluetooth if not used
-   ```
-   Save changes and reboot: 
-   ```bash
-   sudo reboot
-   ```
-2. Final test for ReSpeaker with ALSA
-   ```bash
-   aplay -l          # you should see only the seeed2mic... device
+   aplay -l
    arecord -l        # as card 0
+   ```
+2. Set Capture and PCM/Speaker volumes and test the audio
+   ```bash
    alsamixer         # set Speaker and Capture = 75%
    arecord -r 16000 -c 1 -fS16_LE -t wav -d 5 test.wav
    aplay test.wav
