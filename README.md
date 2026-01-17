@@ -174,16 +174,27 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
    dtoverlay=seeed-2mic-voicecard
    ```
 
-**And finally, for both versions**, test the ReSpeaker with ALSA
-1. Check that the only device used by aplay and arecord is named like "seeed2mic..."
+**And finally, for both versions**, reboot the device and test the ReSpeaker with ALSA
+1. Reboot the device
+   ```bash
+   sudo reboot
+   ```
+2. Check if Respeaker is found and is the only device used by aplay and arecord. It's card number should be 0 and the name like "seeed2mic..."
    ```bash
    aplay -l
-   arecord -l        # as card 0
+   arecord -l
    ```
-2. Set Capture and PCM/Speaker volumes and test the audio
+3. Set Capture and PCM/Speaker volumes
+   Run `alsamixer` and configure the following important sliders:
+   - **PCM / Master**: Digital playback volume (keep around 80%).
+   - **Line / Speaker / Line**: Volume for the JST connector (white plug).
+   - **Headphone**: Volume for the 3.5mm jack.
+   - **PGA / Capture**: **Microphone Analog Gain**. This is critical. Set to ~50-70%. If too high, audio clips; if too low, it won't hear you.
+   - **AGC**: Automatic Gain Control. Recommended to turn **OFF** for consistent wake word detection.
+
+4. Test the recording:
    ```bash
-   alsamixer         # set Speaker and Capture = 75%
-   arecord -r 16000 -c 1 -fS16_LE -t wav -d 5 test.wav
+   arecord -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
    aplay test.wav
    ```
 ## 3. Install a Shared Virtual Environment for Python Apps
@@ -277,6 +288,7 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    You can restore from the initial or compressed image using Raspberry Pi Imager. 
 
 ## 🎙️ Install and run Voice Assistant
+Since the voice assistant is based on communication with Gemini Live API, 
  ## 1. Install libraries
  Install the required Python libraries
    ```bash
