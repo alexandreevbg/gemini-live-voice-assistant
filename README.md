@@ -85,7 +85,7 @@ Follow this procedure to install the latest Raspberry Pi OS:
 - Enable the SSH connection and write OS on SD-Card
 - Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
 
-At the time of writing, the stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
+At the time of writing, the latest stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
 
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
 First, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
