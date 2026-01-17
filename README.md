@@ -192,7 +192,7 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
 1. Install system dependencies:
    ```bash
    sudo apt update
-   sudo apt install git build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
+   sudo apt install build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
    ```
 2. Create the shared virtual environment:
    ```bash
@@ -204,6 +204,10 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
    ```bash
    cd ~
    git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git
+   mv gemini-live-voice-assistant/patches .
+   mv gemini-live-voice-assistant/voiceAssist .
+   mv gemini-live-voice-assistant/wifi-config .
+   rm -rf gemini-live-voice-assistant
    ```
 
 ## 4. Install Wi-Fi Captive Portal for WiFi Configuration
@@ -283,9 +287,6 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    ```
 Install the required math libraries and Gemini API
    ```bash
-   mv temp-repo/voiceAssist ~/
-   rm -rf temp-repo
-
    ~/.venv/bin/pip install --upgrade pip setuptools wheel
    ~/.venv/bin/pip install "numpy<2" tflite-runtime
    ~/.venv/bin/pip install pyaudio
