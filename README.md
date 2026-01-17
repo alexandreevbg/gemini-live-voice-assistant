@@ -131,6 +131,9 @@ follow the compact version of the same, aligned to the latest Raspberry Pi OS:
    ## Check logs
    lsmod | grep tlv320
    dmesg | grep tlv320
+
+   ## Cleanup source files
+   rm -rf ~/linux
    ```
 2. Install the overlay
    ```bash
@@ -215,7 +218,6 @@ To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment 
    ```bash
    cd ~
    git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git
-   mv gemini-live-voice-assistant/patches .
    mv gemini-live-voice-assistant/voiceAssist .
    mv gemini-live-voice-assistant/wifi-config .
    rm -rf gemini-live-voice-assistant
@@ -238,10 +240,11 @@ You can open the portal with your phone or computer, select a new SSID from the 
    sudo raspi-config
    ```
    Select "Interfacing Options" -> "SPI" -> "Yes".
-3. Run and test the Wi-Fi configuration manually
+3. Test the Wi-Fi configuration manually
    ```bash
    sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
    ```
+   When run, the device should blink once with blue light
 4. Create a one-shot service for the portal
    ```bash
    sudo nano /etc/systemd/system/wifi-config.service
@@ -266,8 +269,9 @@ You can open the portal with your phone or computer, select a new SSID from the 
    Then, enable the service to run on boot:
    ```bash
    sudo systemctl enable wifi-config.service
+   sudo reboot
    ```
-Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
+The device should blink once with blue light when it's ready. Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
    
 ## 5. Install a Backup Solution (optional)
 For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficiently creates a complete backup of a Raspberry Pi in the form of an image file.
@@ -284,24 +288,70 @@ For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficient
    sudo mount -t nfs -o proto=tcp,port=2049 <NAS IP address>/<target directory> /mnt
    sudo image-backup -o -v
    ```
-   After running the command, enter the name of the target image to /mnt/<target directory>, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
-   You can restore from the initial or compressed image using Raspberry Pi Imager. 
+   After running the command, enter the name of the target image to /mnt/\<image name\>.img, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
+   Then, you can flash the image by Raspberry Pi Imager from the resulting or compressed image. 
 
 ## 🎙️ Install and run Voice Assistant
-Since the voice assistant is based on communication with Gemini Live API, 
- ## 1. Install libraries
- Install the required Python libraries
+Since the voice assistant is based on communication with Gemini Live API, you should obtain a GEMINI_API_KEY.
+1. Go to [Google AI Studio](https://aistudio.google.com/) and log in with your Google account.
+2. Click on **Get API key** and create a key for a new project.
+3. Copy the key; you will need to export it as an environment variable before running the assistant.
+
+Follow with installations below:
+
+1. Install the required global Python libraries
    ```bash
    sudo apt update
    sudo apt install -y python3-pip python3-dev
    sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0   
    sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0 libopenblas-dev
    ```
-Install the required math libraries and Gemini API
+
+2. Install the math Gemini API
    ```bash
    ~/.venv/bin/pip install --upgrade pip setuptools wheel
    ~/.venv/bin/pip install "numpy<2" tflite-runtime
    ~/.venv/bin/pip install pyaudio
    ~/.venv/bin/pip cache purge
    ~/.venv/bin/pip install -q -U google-genai
+   ```
+
+3. Set the API key and execute the main script:
+   ```bash
+   export GEMINI_API_KEY="your_api_key_here"
+   cd ~/voiceAssist
+   ~/.venv/bin/python main.py
+   ```
+
+4. To confugre the voiceassist service, create a file:
+   ```bash
+   mkdir -p ~/.config/systemd/user
+   nano ~/.config/systemd/user/voiceassist.service
+   ```
+   Then copy-paste there the following:
+   ```bash
+   [Unit]
+   Description=VoiceAssist Service
+   After=sound.target
+   Requires=sound.target
+
+   [Service]
+   Type=simple
+   WorkingDirectory=/home/chochko
+   ExecStart=/home/chochko/.venv/bin/python -m voiceAssist/voiceAssist.main
+   Environment="PATH=/home/chochko/.venv/bin:/usr/local/bin:/usr/bin"
+   Environment=GEMINI_API_KEY="<your Gemini API Key>"
+   Restart=on-failure
+
+   [Install]
+   WantedBy=default.target
+   ```
+   Populate your Gemini API Key above, run, and check the service:
+   ```bash
+   sudo loginctl enable-linger chochko
+   sudo usermod -aG gpio chochko
+   systemctl --user enable voiceassist.service
+   systemctl --user daemon-reload
+   systemctl --user start voiceassist.service
+   systemctl --user status voiceassist.service
    ```
