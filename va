@@ -1,8 +1,0 @@
-#!/bin/bash
-export GEMINI_API_KEY="<your Gemini API Key"
-#export HA_TOKEN="<your Home Assistant Token>"
-#export SPOTIFY_CLIENT_ID=<your Spotify Client>
-#export SPOTIFY_CLIENT_SECRET=<your Spotify Secret>
-
-systemctl --user stop voiceassist
-"$HOME/.venv/bin/python" -m voiceAssist.main
