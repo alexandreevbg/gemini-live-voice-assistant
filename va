@@ -1,0 +1,8 @@
+#!/bin/bash
+export GEMINI_API_KEY="you_gemini_api_key_here"
+#export HA_TOKEN="your_home_assistant_token_here"
+#export SPOTIFY_CLIENT_ID=<your_spotify_client_ID_here>
+#export SPOTIFY_CLIENT_SECRET=<your_spotify_client_secret_here>
+
+systemctl --user stop voiceassist
+"$HOME/.venv/bin/python" -m voiceAssist.main
