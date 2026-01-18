@@ -38,6 +38,7 @@ def init_leds():
 def set_led_mode(mode: AudioMode):
     """Sets the LED color/behavior based on the AudioMode."""
     _LOGGER.info(f"Switching to {mode}.")
+
     if mode == AudioMode.WAKE_WORD:
         # Blink RED once
         for i in range(NUM_LEDS):

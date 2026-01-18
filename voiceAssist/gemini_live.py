@@ -22,11 +22,28 @@ class GeminiClient:
         self.base_config = {
             "response_modalities": ["AUDIO"],
             "system_instruction": "You are a helpful and friendly AI assistant. Your name is Чочко. When telling the time in Bulgarian, always use the format 'HH часа и MM минути' (e.g. '17 часа и 23 минути').",
+            "tools": []
         }
+
+        # --- 1. Volume Control Tool (Always Available) ---
+        self.base_config["tools"].append({
+            "function_declarations": [{
+                "name": "adjust_volume",
+                "description": "Adjust the volume of the voice assistant. Use this to make it louder, quieter, or set a specific volume level.",
+                "parameters": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "action": {"type": "STRING", "enum": ["increase", "decrease", "set"], "description": "The action to perform: 'increase' (louder), 'decrease' (quieter), or 'set'."},
+                        "level": {"type": "INTEGER", "description": "The target volume percentage (0-100). Required only if action is 'set'."}
+                    },
+                    "required": ["action"]
+                }
+            }]
+        })
         
         # Only add tools if Home Assistant is connected
         if self.ha_client.connected:
-            self.base_config["tools"] = [{
+            self.base_config["tools"].append({
                 "function_declarations": [{
                     "name": "control_smart_device",
                     "description": "Control smart home devices by sending a natural language command.",
@@ -38,7 +55,7 @@ class GeminiClient:
                         "required": ["command"]
                     }
                 }]
-            }]
+            })
         
         # Add Spotify tool if connected
         if self.spotify_client and self.spotify_client.connected:
@@ -62,10 +79,7 @@ class GeminiClient:
                     "parameters": {"type": "OBJECT", "properties": {}}
                 }]
             }
-            if "tools" in self.base_config:
-                self.base_config["tools"].append(spotify_tool)
-            else:
-                self.base_config["tools"] = [spotify_tool]
+            self.base_config["tools"].append(spotify_tool)
         
         self.audio_queue_in = asyncio.Queue()
         
@@ -79,11 +93,16 @@ class GeminiClient:
         self.audio_callback = None
         self.tool_start_callback = None
         self.tool_end_callback = None
+        self.volume_callback = None
         self.receive_task = None
 
     def set_audio_callback(self, callback):
         """Sets the callback to handle received audio chunks."""
         self.audio_callback = callback
+
+    def set_volume_callback(self, callback):
+        """Sets the callback to handle volume adjustments."""
+        self.volume_callback = callback
 
     def set_tool_start_callback(self, callback):
         """Sets the callback to notify when a tool call starts."""
@@ -177,6 +196,19 @@ class GeminiClient:
                         "response": {"error": str(e)},
                         "id": call.id
                     })
+            elif call.name == "adjust_volume":
+                try:
+                    args = call.args
+                    action = args.get("action")
+                    level = args.get("level")
+                    if self.volume_callback:
+                        result = await asyncio.to_thread(self.volume_callback, action, level)
+                        function_responses.append({"name": call.name, "response": result, "id": call.id})
+                    else:
+                        function_responses.append({"name": call.name, "response": {"error": "Volume control unavailable"}, "id": call.id})
+                except Exception as e:
+                    _LOGGER.error("Volume Tool Error: %s", e)
+                    function_responses.append({"name": call.name, "response": {"error": str(e)}, "id": call.id})
             elif call.name == "play_music":
                 try:
                     args = call.args

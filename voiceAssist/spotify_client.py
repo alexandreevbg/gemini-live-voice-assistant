@@ -65,9 +65,13 @@ class SpotifyClient:
 
             _LOGGER.warning("Preferred device 'chochko'/'raspotify' not found. Available: %s", [d['name'] for d in all_devices])
 
-            # 2. Prefer active device, else first available
+            # 2. Prefer active device
             active_device = next((d for d in all_devices if d['is_active']), None)
-            return active_device['id'] if active_device else (all_devices[0]['id'] if all_devices else None)
+            if active_device:
+                return active_device['id']
+            
+            # 3. Do not fallback to the first available device to avoid playing on wrong speakers (e.g. TV)
+            return None
         except Exception as e:
             _LOGGER.error(f"Error getting device ID: {e}")
             return None
@@ -79,8 +83,15 @@ class SpotifyClient:
             device_id = self._get_device_id()
 
             if not device_id:
-                _LOGGER.warning("No Spotify devices found. Is Raspotify running?")
-                return {"error": "No Spotify devices found. Check Raspotify service."}
+                _LOGGER.warning("Target Spotify device not found.")
+                return {"error": "I couldn't find the local speaker. Please open Spotify on your phone and select 'Raspotify' to wake it up."}
+
+            # Force volume to a normal level (75%) to fix "stuck at low volume" issues
+            # and ensure it's audible.
+            with self._lock:
+                self.sp.volume(75, device_id=device_id)
+                self.original_volume = 75
+                self.is_ducked = False
 
             if query:
                 results = self.sp.search(q=query, limit=1, type='track,album,playlist')
@@ -144,16 +155,31 @@ class SpotifyClient:
 
     def _duck_volume_thread(self):
         with self._lock:
-            if self.is_ducked: return
+            if self.is_ducked:
+                return
             try:
                 playback = self.sp.current_playback()
-                if playback and playback['is_playing']:
-                    current_vol = playback['device']['volume_percent']
-                    if current_vol is not None and current_vol > 20:
+
+                # Don't check is_playing. Just attempt to duck if we have a device.
+                # This is more robust against state sync delays.
+                if playback and playback.get('device'):
+                    device = playback['device']
+                    device_id = device.get('id')
+                    current_vol = device.get('volume_percent')
+
+                    # If volume isn't reported, we can't know what to restore to.
+                    # The default self.original_volume=75 will be used on unduck.
+                    if current_vol is not None:
                         self.original_volume = current_vol
-                        self.sp.volume(20)
+                        # Decrease to 30% of the current volume
+                        duck_vol = int(current_vol * 0.3)
+                        self.sp.volume(duck_vol, device_id=device_id)
                         self.is_ducked = True
-                        _LOGGER.debug(f"Spotify volume ducked from {current_vol} to 20")
+                        _LOGGER.debug(f"Spotify volume ducked to {duck_vol}% (30% of {current_vol}%)")
+                    else:
+                        _LOGGER.debug("Spotify volume not reported. Ducking to 20 anyway.")
+                        self.sp.volume(20, device_id=device_id)
+                        self.is_ducked = True
             except spotipy.SpotifyException as e:
                 if e.http_status == 403 and "VOLUME_CONTROL_DISALLOW" in str(e):
                     _LOGGER.info("Spotify volume control not allowed on this device. Ducking skipped.")
@@ -173,7 +199,7 @@ class SpotifyClient:
             try:
                 self.sp.volume(self.original_volume)
                 self.is_ducked = False
-                _LOGGER.debug(f"Spotify volume restored to {self.original_volume}")
+                _LOGGER.debug(f"Spotify volume restored to {self.original_volume}%")
             except Exception as e:
                 _LOGGER.error(f"Spotify unduck error: {e}")
                 self.is_ducked = False

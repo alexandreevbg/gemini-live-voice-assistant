@@ -191,10 +191,12 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
 3. Set Capture and PCM/Speaker volumes
    Run `alsamixer` and configure the following important sliders:
    - **PCM / Master**: Digital playback volume (keep around 80%).
-   - **Line / Speaker / Line**: Volume for the JST connector (white plug).
+   - **Speaker / Line**: Volume for the JST connector (white plug).
    - **Headphone**: Volume for the 3.5mm jack.
    - **PGA / Capture**: **Microphone Analog Gain**. This is critical. Set to ~50-70%. If too high, audio clips; if too low, it won't hear you.
    - **AGC**: Automatic Gain Control. Recommended to turn **OFF** for consistent wake word detection.
+
+   > **Note on Volume & Echo**: The ReSpeaker HAT does not have hardware echo cancellation. If you play music (like Spotify) very loudly, the microphone will pick it up and may not be able to hear your wake word. It is recommended to keep the playback volume at a moderate level for reliable performance.
 
 4. Test the recording:
    ```bash
@@ -356,9 +358,9 @@ Follow with installations below:
    systemctl --user status voiceassist.service
    ```
 
-## Add an integration with Home Assistant (optional)
-The integration with Home Assistant is already included in the voice assistant source code. The only you have to do is to get the unique token and add it to the environment.
-1. Go to Home Assistant dash board
+## 🏠 Add an integration with Home Assistant (optional)
+The integration with Home Assistant is already included in the voice assistant source code. The only thing you have to do is to get the unique token and add it to the environment.
+1. Go to Home Assistant dashboard
 2. Click on your username at bottom-left
 3. Click on Security tab
 4. Scroll down to the Long-lived access tokens
@@ -374,13 +376,18 @@ The integration with Home Assistant is already included in the voice assistant s
    Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
    ...
    ```
-8. Save and reboot
-Your Home Assistant should be already configured and run. To make your Home Assistant a multi-language one, you should define aliases for you devices.
-## Add an integration with Spotify (optional)
-To make integration with Spotify, we need to:
-- **install raspotify** - it creates a network player compatible with Spotify and Home Assistant
-- **install spotipy** - it allows the voice assistant to control Spotify
-- **Get Spotify credentials** and to add them to the environment variables
+8. Save and restart the service:
+   ```bash
+   systemctl --user restart voiceassist.service
+   ```
+Your Home Assistant should be already configured and running. To make your Home Assistant a multi-language one, you should define aliases for your devices.
+
+## 🎧 Add an integration with Spotify (optional)
+To integrate with Spotify, we need to:
+- install **raspotify** - it creates a network player compatible with Spotify and Home Assistant
+- Get **Spotify credentials** and add them to the environment variables
+- create a **Spotify cache** file - it allows the voice assistant to control Spotify
+- setup **ALSA Dmix** mode - it allows playing both: Gemini and Spotify on the same speaker
 1. To install raspotify:
    ```bash
    sudo apt update
@@ -388,28 +395,84 @@ To make integration with Spotify, we need to:
    sudo systemctl status raspotify
    ```
 
-2. Spotipy is already installed, because the library is imported in the source code
-3. To get Spotify credentials:
+2. To get Spotify credentials:
 - go to [Spotify for Developers](https://developer.spotify.com/dashboard/applications) and log in
 - select Home >> Dashboard and click on Create app button
 - Copy the Client ID and Client Secret and add them to the environment variables in service configuration:
    ```bash
+   nano ~/.config/systemd/user/voiceassist.service
+   ```
+   ```bash
    ...
    Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
+   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
    Environment=SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
    Environment=SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
    ...
    ```
 
-4. Setup ALSA dmix and Raspotify sink and edit raspofity config file
+3. Create a Spotify cache
    ```bash
-   sudo mv asound.conf /etc
+   export SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
+   export SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
+   ~/.venv/bin/python voiceAssist/setup_spotify.py
+   ```
+- Copy the long URL starting with https://accounts.spotify.com/authorize... from the terminal.
+- Open it in your browser and log in to your Spotify account and click Agree
+- Your browser will redirect you to a page starting with http://127.0.0.1:8888/callback... Ignore any message saying "This site can't be reached" or "Connection refused".
+- Copy the above address (authorization code) and paste it into the terminal after "Enter URL:" and press enter
+
+4. To setup ALSA dmix and Raspotify sink and edit raspotify config file
+   ```bash
+   sudo nano /etc/asound.conf
+   ```
+   Paste the following content to enable audio mixing (allowing both the assistant and Spotify to play audio simultaneously):
+   ```bash
+   pcm.dmixed {
+       type dmix
+       ipc_key 1024
+       ipc_key_add_uid 0
+       ipc_perm 0666
+       slave {
+           pcm "hw:0,0"
+           period_time 0
+           period_size 1024
+           buffer_size 8192
+           rate 48000
+       }
+       bindings {
+           0 0
+           1 1
+       }
+   }
+
+   pcm.dsnooped {
+       type dsnoop
+       ipc_key 1025
+       ipc_key_add_uid 0
+       ipc_perm 0666
+       slave {
+           pcm "hw:0,0"
+           channels 2
+           rate 48000
+       }
+   }
+
+   pcm.!default {
+       type asym
+       playback.pcm "plug:dmixed"
+       capture.pcm "plug:dsnooped"
+   }
+   ```
+   Then edit the raspotify config:
+   ```bash
    sudo nano /etc/raspotify/conf
    ```
-   Uncomment the following two lines:
+   Uncomment the following two lines and add values to them:
    ```bash
    LIBRESPOT_BACKEND="alsa"
    LIBRESPOT_DEVICE="default"
+   LIBRESPOT_MIXER="softvol"
    ```
    Save and restart raspotify:
    ```bash

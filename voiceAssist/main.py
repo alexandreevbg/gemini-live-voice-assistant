@@ -24,7 +24,7 @@ from .const import (
 )
 
 # Seconds to wait for Gemini response before switching back to WAKE_WORD
-GEMINI_SILENCE_TIMEOUT = 7
+GEMINI_SILENCE_TIMEOUT = 5
 
 DEBUG = False       # Set to True for debugging
 if DEBUG:
@@ -38,6 +38,8 @@ logging.basicConfig(level=log_level, format=log_format)
 
 # Suppress noisy websockets debug logs
 logging.getLogger("websockets").setLevel(logging.INFO)
+logging.getLogger("spotipy").setLevel(logging.INFO)
+logging.getLogger("urllib3").setLevel(logging.INFO)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,8 +57,8 @@ def get_location():
 def detection_callback(audio_processor: AudioProcessor, gemini_client: GeminiClient, name: str):
     """Called when a wake word is detected."""
     current_mode = audio_processor.get_mode()
-    if current_mode != AudioMode.LISTENING:
-        _LOGGER.info(f"Wake word detected in {current_mode.name}.")
+    if current_mode == AudioMode.WAKE_WORD:
+        _LOGGER.info(f"Wake word '{name}' detected.")
         
         # Switch to listening (captures audio to stt_audio_queue) and start Gemini
         audio_processor.switch_to_listening() 
@@ -97,6 +99,23 @@ def main():
     gemini_client.set_audio_callback(audio_processor.play_audio)
     gemini_client.set_tool_start_callback(audio_processor.switch_to_execute)
     gemini_client.set_tool_end_callback(audio_processor.switch_to_listening)
+
+    # --- Volume Control Handler ---
+    def volume_control_handler(action, level=None):
+        if action == "increase":
+            audio_processor.louder()
+            return {"result": f"Volume increased to {audio_processor.get_volume()}%"}
+        elif action == "decrease":
+            audio_processor.quieter()
+            return {"result": f"Volume decreased to {audio_processor.get_volume()}%"}
+        elif action == "set":
+            if level is not None:
+                audio_processor.set_volume(int(level))
+                return {"result": f"Volume set to {level}%"}
+            return {"error": "Level required for set action"}
+        return {"error": "Unknown action"}
+
+    gemini_client.set_volume_callback(volume_control_handler)
 
     # --- Hardware Initialization ---
     init_leds()
