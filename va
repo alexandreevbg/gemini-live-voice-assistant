@@ -1,17 +1,8 @@
-<<<<<<< HEAD
 #!/bin/bash
-export GEMINI_API_KEY="AIzaSyDeAmn5Gh7e95JkaJmNmjWDWHuaLYXFO0w"
-export HA_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4ZTI3NTNhMGNiMGQ0ZTRhODM3NWVjYmU0YjdiOThmNyIsImlhdCI6MTc2ODcyNjUyMSwiZXhwIjoyMDg0MDg2NTIxfQ.0Ck6kFR6k6j72p1g20LnThgN2CO870O_xFFsskApItY"
-=======
 export GEMINI_API_KEY="<your Gemini API Key"
-export HA_TOKEN="<your Home Assistant Token>"
->>>>>>> 93da3d20d1aeb98fad5e5c66ec1901d44fabb60a
+#export HA_TOKEN="<your Home Assistant Token>"
 #export SPOTIFY_CLIENT_ID=<your Spotify Client>
 #export SPOTIFY_CLIENT_SECRET=<your Spotify Secret>
 
 systemctl --user stop voiceassist
-<<<<<<< HEAD
 "$HOME/.venv/bin/python" -m voiceAssist.main
-=======
-/home/chochko/.venv/bin/python -m voiceAssist.main
->>>>>>> 93da3d20d1aeb98fad5e5c66ec1901d44fabb60a
