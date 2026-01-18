@@ -7,7 +7,7 @@ import numpy as np
 
 _DIR = Path(__file__).parent
 MODELS_DIR: Path = _DIR / "models"
-WAKE_WORD_MODEL_NAME = "chohchkoh"
+WAKE_WORD_MODEL_NAME = "chochko"
 WAKE_WORD_MODEL_PATH: Path = MODELS_DIR / f"{WAKE_WORD_MODEL_NAME}.tflite"
 THRESHOLD = 0.1
 TRIGGER_LEVEL = 1

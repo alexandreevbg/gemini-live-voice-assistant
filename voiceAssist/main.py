@@ -24,7 +24,7 @@ from .const import (
 )
 
 # Seconds to wait for Gemini response before switching back to WAKE_WORD
-GEMINI_SILENCE_TIMEOUT = 12
+GEMINI_SILENCE_TIMEOUT = 7
 
 DEBUG = False       # Set to True for debugging
 if DEBUG:

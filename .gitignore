@@ -3,9 +3,7 @@ __pycache__/
 *.py[cod]
 
 # Virtual Environment (Do not commit this!)
-venv/
-env/
-.env
+.venv/
 
 # IDE settings
 .vscode/
@@ -22,3 +20,4 @@ voiceAssist-live-Cho
 *.onnx
 *.sch
 *.brd
+*.

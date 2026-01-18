@@ -7,11 +7,12 @@
 This project contains instructions, tools and source code for creating a Multilingual Voice Assistant and includes:
 - Direct integration with **Gemini Live API**
 - On-device wake word detection using **OpenWakeWord** algorithms
-- Optional integration with **Spotify**
 - Optional integration with **Home Assistant**
-- Optional integration with **other services**
+- Optional integration with **Spotify**
 
 The assistant is designed to run on a **Raspberry Pi Zero 2W** accompanied by a **Seeed Studio ReSpeaker 2-mic HAT**.
+
+OpenWakeWord algorithms are extracted from: https://github.com/rhasspy/wyoming-satellite
 
 ## Repository Structure
 - **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord models in non-English languages
@@ -307,20 +308,19 @@ Follow with installations below:
    sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0 libopenblas-dev
    ```
 
-2. Install the math Gemini API
+2. Install the math, Gemini API, and Spotify libraries
    ```bash
    ~/.venv/bin/pip install --upgrade pip setuptools wheel
    ~/.venv/bin/pip install "numpy<2" tflite-runtime
-   ~/.venv/bin/pip install pyaudio
+   ~/.venv/bin/pip install pyaudio spotipy
    ~/.venv/bin/pip cache purge
    ~/.venv/bin/pip install -q -U google-genai
    ```
 
 3. Set the API key and execute the main script:
    ```bash
-   export GEMINI_API_KEY="your_api_key_here"
-   cd ~/voiceAssist
-   ~/.venv/bin/python main.py
+   export GEMINI_API_KEY="put_your_api_key_here"
+   "$HOME/.venv/bin/python" -m voiceAssist.main
    ```
 
 4. To confugre the voiceassist service, create a file:
@@ -328,7 +328,7 @@ Follow with installations below:
    mkdir -p ~/.config/systemd/user
    nano ~/.config/systemd/user/voiceassist.service
    ```
-   Then copy-paste there the following:
+   Then copy-paste the following content, but replace `/home/chochko` with your actual home directory path:
    ```bash
    [Unit]
    Description=VoiceAssist Service
@@ -338,9 +338,9 @@ Follow with installations below:
    [Service]
    Type=simple
    WorkingDirectory=/home/chochko
-   ExecStart=/home/chochko/.venv/bin/python -m voiceAssist/voiceAssist.main
+   ExecStart=/home/chochko/.venv/bin/python -m voiceAssist.main
    Environment="PATH=/home/chochko/.venv/bin:/usr/local/bin:/usr/bin"
-   Environment=GEMINI_API_KEY="<your Gemini API Key>"
+   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
    Restart=on-failure
 
    [Install]
@@ -354,4 +354,64 @@ Follow with installations below:
    systemctl --user daemon-reload
    systemctl --user start voiceassist.service
    systemctl --user status voiceassist.service
+   ```
+
+## Add an integration with Home Assistant (optional)
+The integration with Home Assistant is already included in the voice assistant source code. The only you have to do is to get the unique token and add it to the environment.
+1. Go to Home Assistant dash board
+2. Click on your username at bottom-left
+3. Click on Security tab
+4. Scroll down to the Long-lived access tokens
+5. Click on Create Token button and name the token
+6. Copy the token and edit the voiceassist service configuration
+   ```bash
+    nano ~/.config/systemd/user/voiceassist.service
+   ```
+7. Add one more Environment line
+   ```bash
+   ...
+   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
+   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
+   ...
+   ```
+8. Save and reboot
+Your Home Assistant should be already configured and run. To make your Home Assistant a multi-language one, you should define aliases for you devices.
+## Add an integration with Spotify (optional)
+To make integration with Spotify, we need to:
+- **install raspotify** - it creates a network player compatible with Spotify and Home Assistant
+- **install spotipy** - it allows the voice assistant to control Spotify
+- **Get Spotify credentials** and to add them to the environment variables
+1. To install raspotify:
+   ```bash
+   sudo apt update
+   curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
+   sudo systemctl status raspotify
+   ```
+
+2. Spotipy is already installed, because the library is imported in the source code
+3. To get Spotify credentials:
+- go to [Spotify for Developers](https://developer.spotify.com/dashboard/applications) and log in
+- select Home >> Dashboard and click on Create app button
+- Copy the Client ID and Client Secret and add them to the environment variables in service configuration:
+   ```bash
+   ...
+   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
+   Environment=SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
+   Environment=SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
+   ...
+   ```
+
+4. Setup ALSA dmix and Raspotify sink and edit raspofity config file
+   ```bash
+   sudo mv asound.conf /etc
+   sudo nano /etc/raspotify/conf
+   ```
+   Uncomment the following two lines:
+   ```bash
+   LIBRESPOT_BACKEND="alsa"
+   LIBRESPOT_DEVICE="default"
+   ```
+   Save and restart raspotify:
+   ```bash
+   sudo systemctl restart raspotify
    ```

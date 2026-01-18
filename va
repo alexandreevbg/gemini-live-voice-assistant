@@ -1,5 +1,8 @@
-export GEMINI_API_KEY="AIzaSyALfBo7WmXulugbsoXPweQhLz3mKztfbRs"
-export HA_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3ZmJmOGYzNWJhYjc0ZTMyYTY5NDcyN2NlNTI3ZjBiMyIsImlhdCI6MTc1Nzg0OTE5NSwiZXhwIjoyMDczMjA5MTk1fQ.J5Diz7VQQl698b1Sh_jdpCefxaCZ69-SW4_yUyoBQgw"
+#!/bin/bash
+export GEMINI_API_KEY="AIzaSyDeAmn5Gh7e95JkaJmNmjWDWHuaLYXFO0w"
+export HA_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4ZTI3NTNhMGNiMGQ0ZTRhODM3NWVjYmU0YjdiOThmNyIsImlhdCI6MTc2ODcyNjUyMSwiZXhwIjoyMDg0MDg2NTIxfQ.0Ck6kFR6k6j72p1g20LnThgN2CO870O_xFFsskApItY"
+#export SPOTIFY_CLIENT_ID=<your Spotify Client>
+#export SPOTIFY_CLIENT_SECRET=<your Spotify Secret>
 
 systemctl --user stop voiceassist
-/home/chochko/voiceAssist/.venv/bin/python -m voiceAssist.main
+"$HOME/.venv/bin/python" -m voiceAssist.main
