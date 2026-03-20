@@ -198,12 +198,12 @@ For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below:
 
    > **Note on Volume & Echo**: The ReSpeaker HAT does not have hardware echo cancellation. If you play music (like Spotify) very loudly, the microphone will pick it up and may not be able to hear your wake word. It is recommended to keep the playback volume at a moderate level for reliable performance.
 
-Save new values by:
+4. Save new values by:
   ```bash
   sudo alsactl store
   ```
 
-4. Test the recording:
+5. Test the recording:
    ```bash
    arecord -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
    aplay test.wav
