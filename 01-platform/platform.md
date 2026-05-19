@@ -20,9 +20,14 @@ Use **Raspberry Pi Imager** to flash your SD card:
 ## 2. Install Drivers for ReSpeaker 2-mic HAT
 
 ### Preliminary System Configuration
-Disable password prompts for `sudo` to simplify the headless setup:
+Optimize the system for headless use and speed up SSH login:
+
    ```bash
+   # Enable passwordless sudo for the current user
    echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_nopasswd
+
+   # Disable dynamic MOTD scripts to fix long login delays on Pi Zero 2W
+   sudo chmod -x /etc/update-motd.d/*
    ```
 
 Disable onboard audio and Bluetooth to prevent conflicts and save resources:
@@ -58,7 +63,7 @@ Since newer kernels require manual building of the TLV320AIC3104 codec driver:
    cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c .
 
    # Use the Makefile provided in the 01-platform directory of this repo
-   wget <https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/01-platform/Makefile>
+   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/01-platform/Makefile
 
    ## Build the driver 
    make
@@ -90,14 +95,27 @@ It should appear as `card 0: seeed2micvoicec`.
 
 ### Set Gains via Alsamixer
    Run `alsamixer` and configure the following important sliders:
-   - **PGA / Capture**: **Microphone Analog Gain**. This is critical. Set to ~50-70%. If too high, audio clips; if too low, it won't hear you.
-   - **AGC**: Automatic Gain Control. Recommended to turn **OFF** for consistent wake word detection.
-   - **Speaker/Headphone**: Adjust to your preferred output level.
+   - **PCM**: Master output volume - set to 100%
+   - **Line DAC**: Max output voulme limit - set to 66
+   - **PGA / Capture**: microphone Analog Gain - set to ~34%
+   - **AGC**: Automatic Gain Control - recommended to turn it **OFF**
+
+Save levels with:
+   ```bash
+   sudo alsactl store
+   ```   
 
 Test recording:
    ```bash
    arecord -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
    aplay test.wav
    ```
+
+Cleanup source fles:
+   ```bash
+   cd ~ 
+   rm -rf ~/linux
+   ```
+
 ---
-Return to Main README
+[Return to Main README](../README.md)
