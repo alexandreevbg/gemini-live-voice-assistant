@@ -22,8 +22,8 @@ This file stores sensitive environment variables, such as API keys and tokens. Y
 
 Add those two lines to your `~/.bashrc` file to automatically load your environment variables and activate your Python virtual environment when you start a new shell session.
 ```bash
+echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
 echo 'source ~/.venv/bin/activate' >> ~/.bashrc
-echo 'export GEMINI_API_KEY="YOUR_GEMINI_API_KEY"' >> ~/.bashrc
 ``` 
 
 ## 3. Audio Stack: PipeWire + AEC
