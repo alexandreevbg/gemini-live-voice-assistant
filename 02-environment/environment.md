@@ -1,6 +1,4 @@
 # Environment & Audio Stack
-
-# 2. Environment & Audio Stack
 This section details the setup of the Python virtual environment, the PipeWire audio server with Acoustic Echo Cancellation (AEC), and essential configuration files.
 
 ## 1. Python Virtual Environment
@@ -185,6 +183,10 @@ wpctl set-default 39	# aec_output
 Reboot the system to ensure all changes are applied correctly.
 ```bash
 sudo reboot
+```
+
+Verify pipewire is working as expected
+```bash
 systemctl --user status pipewire wireplumber pipewire-pulse
 ```
 
@@ -197,7 +199,7 @@ wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant
 Play music and record speech at the same time for 10 sec
 ```bash
 pw-play music_48k.wav &
-pw-record --target "alsa_input.platform-soc_sound.stereo-fallback" test.wav &
+pw-record test.wav &
 sleep 10
 killall pw-play pw-record
 sleep 2

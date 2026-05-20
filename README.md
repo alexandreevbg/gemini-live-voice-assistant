@@ -24,7 +24,7 @@ Follow these steps in order to build your assistant:
 Hardware specifications, flashing Raspberry Pi OS (Trixie), and compiling ReSpeaker 2-mic v2.0 drivers.
 
 ### 2. [Environment & Audio Stack](./02-environment/environment.md)
-Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA configurations, and system `.env`/`json` files.
+Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA configurations, and system `.env` and '.bashrc' files.
 
 ### 3. [Tools](./03-tools/tools.md)
 Instructions for the system backup tool, headless Wi-Fi captive portal, and Raspotify integration.
