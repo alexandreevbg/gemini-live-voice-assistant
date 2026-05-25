@@ -3,7 +3,6 @@
 This guide covers the base layer of the assistant, including hardware specifications, OS installation, and driver setup for the ReSpeaker 2-mic HAT v2.0.
 
 ----
-## 1. Install Raspberry Pi OS (64-bit) Lite
 
 ## Hardware Requirements
 | Component | Specification |
@@ -11,6 +10,8 @@ This guide covers the base layer of the assistant, including hardware specificat
 | **SBC** | Raspberry Pi Zero 2W |
 | **Audio** | Seeed Studio ReSpeaker 2-Mic HAT v2.0 |
 | **SD Card** | 16GB+ Class 10 |
+
+## 1. Install Raspberry Pi OS (64-bit) Lite
 
 Use **Raspberry Pi Imager** to flash your SD card:
 - **Device:** Raspberry Pi Zero 2W
@@ -51,7 +52,6 @@ Since newer kernels require manual building of the TLV320AIC3104 codec driver:
    ```bash
    ## Install kernel
    sudo apt update
-   sudo apt install raspberrypi-kernel-headers -y
    sudo apt install flex bison libssl-dev bc build-essential libncurses-dev git device-tree-compiler -y
    git clone --depth=1 --branch rpi-6.12.y https://github.com/raspberrypi/linux.git
 

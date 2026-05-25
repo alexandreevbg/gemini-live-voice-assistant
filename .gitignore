@@ -1,0 +1,6 @@
+# Avoid commit the following directories and files
+00-resources/
+.vscode/
+.idea/
+.venv/
+.git/
