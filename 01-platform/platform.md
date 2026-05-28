@@ -18,8 +18,6 @@ Use **Raspberry Pi Imager** to flash your SD card:
 - **OS:** Raspberry Pi OS Lite (64-bit). This project is tested on **Debian 13 (Trixie)** / Testing branch for Python 3.13 support.
 - **Settings:** Enable SSH, set your username (e.g., `chochko`), and configure your Wi-Fi credentials.
 
-## 2. Install Drivers for ReSpeaker 2-mic HAT
-
 ### Preliminary System Configuration
 Optimize the system for headless use and speed up SSH login:
 
@@ -45,7 +43,13 @@ Disable onboard audio and Bluetooth to prevent conflicts and save resources:
    dtoverlay=disable-bt             # disable bluetooth if not used
    ```
 
-### ReSpeaker 2-mic HAT v2.0 Driver Setup
+Monitor CPU Temperature
+   ```bash
+   watch 'vcgencmd measure_temp'
+  ```   
+
+## 2. Install Drivers for ReSpeaker 2-mic HAT
+
 Since newer kernels require manual building of the TLV320AIC3104 codec driver:
 
 #### Build the Driver
