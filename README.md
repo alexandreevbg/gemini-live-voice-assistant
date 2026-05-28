@@ -15,6 +15,9 @@ Chochko is a cutting-edge voice assistant designed for the **Raspberry Pi Zero 2
 - **Smart Home Connectivity:** Optional integrations with **Home Assistant** for smart device control and **Spotify** for music streaming.
 ---
 
+## Repository Structure
+- **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord models in non-English languages
+
 ## 🚀 Implementation Roadmap
 
 Follow these steps in order to build your assistant:
@@ -23,11 +26,11 @@ Follow these steps in order to build your assistant:
 ### 1. [Platform Setup](./01-platform/platform.md)
 Hardware specifications, flashing Raspberry Pi OS (Trixie), and compiling ReSpeaker 2-mic v2.0 drivers.
 
-### 2. [Environment & Audio Stack](./02-environment/environment.md)
-Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA configurations, and system `.env` and '.bashrc' files.
-
-### 3. [Tools](./03-tools/tools.md)
+### 2. [Tools](./02-tools/tools.md)
 Instructions for the system backup tool, headless Wi-Fi captive portal, and Raspotify integration.
+
+### 3. [Environment & Audio Stack](./03-environment/environment.md)
+Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA configurations, and system `.env` and '.bashrc' files.
 
 ### 4. [Wake Word Training](./04-training/training.md)
 Using the Google Colab notebook to train custom models for English and non-English wake words.

@@ -25,7 +25,16 @@ Mount an external drive to store the image and run backup
 
 ---
 
-### 2. Headless Wi-Fi captive portal
+## 2. Python Virtual Environment
+We use a shared virtual environment (`~/.venv`) to manage Python dependencies efficiently and consistently across different project components.
+
+```bash
+sudo apt update
+sudo apt install -y python3-venv python3-pip
+python3 -m venv --system-site-packages ~/.venv
+```
+
+### 3. Headless Wi-Fi captive portal
 The ReSpeaker 2-mic HAT has on-board button connected to GPIO17. Holding the button during system boot activates the Wi-Fi captive portal having:
 - SSID: "Chochko-WiFi-Setup" 
 - password: "chochko123"

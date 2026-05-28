@@ -1,16 +1,7 @@
 # Environment & Audio Stack
 This section details the setup of the Python virtual environment, the PipeWire audio server with Acoustic Echo Cancellation (AEC), and essential configuration files.
 
-## 1. Python Virtual Environment
-We use a shared virtual environment (`~/.venv`) to manage Python dependencies efficiently and consistently across different project components.
-
-```bash
-sudo apt update
-sudo apt install -y python3-venv python3-pip
-python3 -m venv --system-site-packages ~/.venv
-```
-
-## 2. Configure Environment Variables
+## 1. Configure Environment Variables
 Download the .env template from the repository to your home directory
 ```bash
 wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-environment/.env -O ~/.env
@@ -24,7 +15,7 @@ echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
 echo 'source ~/.venv/bin/activate' >> ~/.bashrc
 ``` 
 
-## 3. Audio Stack: PipeWire + AEC
+## 2. Audio Stack: PipeWire + AEC
 PipeWire is used to manage audio streams and enable Acoustic Echo Cancellation (AEC), allowing the microphone to effectively filter out audio being played by the speaker.
 
 Install PipeWire and its related components.
@@ -42,7 +33,7 @@ pipewire --version
 ```
 The expected version is 1.4.2 or newer.
 
-## 4. Set AEC config
+## 3. Set AEC config
 Create the necessary configuration directories and files for PipeWire and WirePlumber.
 ```bash
 mkdir -p ~/.config/pipewire/pipewire.conf.d ~/.config/wireplumber/wireplumber.conf.d
@@ -145,7 +136,7 @@ monitor.alsa.rules = [
 ]
 ```
 
-## 5. Wipe the cached state and start fresh
+## 4. Wipe the cached state and start fresh
 
 Wipe any cached PipeWire state and restart the services to apply the new configuration.
 ```bash
@@ -154,13 +145,13 @@ rm -rf ~/.local/state/pipewire/*
 systemctl --user start pipewire wireplumber pipewire-pulse
 ```
 
-## 6. Force the metadata (Optional, but recommended)
+## 5. Force the metadata (Optional, but recommended)
 ```bash
 pw-metadata -n settings 0 clock.force-rate 48000
 pw-metadata -n settings 0 clock.force-quantum 480
 ```
 
-## 7. Check and set the default audio nodes
+## 6. Check and set the default audio nodes
 Identify the IDs for `aec_input` and `aec_output` and set them as default.
 ```bash
 wpctl status # Look for aec_input and aec_output IDs
@@ -190,7 +181,7 @@ Verify pipewire is working as expected
 systemctl --user status pipewire wireplumber pipewire-pulse
 ```
 
-# Test AEC
+# 7. Test AEC
 Get music clip
 ```bash
 wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-environment/music_48k.wav
