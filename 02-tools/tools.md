@@ -14,6 +14,12 @@ sudo apt install -y python3-venv python3-pip
 python3 -m venv --system-site-packages ~/.venv
 ```
 
+Download the project locally
+```bash
+cd ~
+git clone https://github.com/alexandreevbg/gemini-live-voice-assistant.git
+```
+
 ## 2. Install the optional tools
 
 ### 1. System backup tool
@@ -56,8 +62,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    Select "Interfacing Options" -> "SPI" -> "Yes".
 3. Get the source scripts
    ```bash
-   cd ~
-   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-tools/wifi-portal
+   mv gemini-live-voice-assistant/02-tools/wifi-portal ~/wifi-config
    ```
 4. Test the Wi-Fi configuration manually
    ```bash
