@@ -26,7 +26,7 @@ Follow these steps in order to build your assistant:
 ### 1. [Platform Setup](./01-platform/platform.md)
 Hardware specifications, flashing Raspberry Pi OS (Trixie), and compiling ReSpeaker 2-mic v2.0 drivers.
 
-### 2. [Tools](./02-tools/tools.md)
+### 2. [Python and Tools](./02-tools/tools.md)
 Instructions for the system backup tool, headless Wi-Fi captive portal, and Raspotify integration.
 
 ### 3. [Environment & Audio Stack](./03-environment/environment.md)
