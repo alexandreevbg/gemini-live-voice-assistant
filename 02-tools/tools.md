@@ -99,9 +99,13 @@ The device should blink once with blue light when it's ready. Of course, you can
 
 ---
 
-### 3. Raspberry-Pi - Spotify Connect client
-```bash
+### 3. Raspotify - Spotify Connect client
+To integrate with Spotify, we need to install **raspotify** - it creates a network player compatible with Spotify and Home Assistant:
+   ```bash
+   sudo apt update
+   curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
+   sudo systemctl status raspotify
+   ```
 
-```
 ---
 [Return to Main README](../README.md)
