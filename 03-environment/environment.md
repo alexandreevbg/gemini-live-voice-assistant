@@ -79,7 +79,9 @@ context.modules = [
 
       capture.props = {
         node.name = "aec_capture"
-        target.object = "alsa:acp:seeed2micvoicec:2:capture"
+        # Use the platform-soc name for better stability across kernel updates
+        target.object = "alsa_input.platform-soc_sound.analog-stereo"
+        
         # Hardware stays Stereo to keep driver happy
         audio.channels = 2
         audio.position = [ FL FR ]
@@ -106,7 +108,7 @@ context.modules = [
 	  }
       playback.props = {
         node.name = "aec_playback"
-        target.object = "alsa_output.platform-soc_sound.stereo-fallback"
+        target.object = "alsa_output.platform-soc_sound.analog-stereo"
         # Playback remains Mono (PipeWire will mix it to the single speaker)
         audio.channels = 1
         audio.position = [ MONO ]
@@ -153,6 +155,8 @@ pw-metadata -n settings 0 clock.force-quantum 480
 
 ## 6. Check and set the default audio nodes
 Identify the IDs for `aec_input` and `aec_output` and set them as default.
+> **Note**: This step is critical. WirePlumber may default back to the hardware nodes until you manually "lock" the defaults. This setting is saved persistently in `~/.local/state/wireplumber/`.
+
 ```bash
 wpctl status # Look for aec_input and aec_output IDs
 ```
@@ -179,6 +183,11 @@ sudo reboot
 Verify pipewire is working as expected
 ```bash
 systemctl --user status pipewire wireplumber pipewire-pulse
+```
+
+And check the default audio devices again
+```bash
+wpctl status # Look for aec_input and aec_output IDs
 ```
 
 # 7. Test AEC

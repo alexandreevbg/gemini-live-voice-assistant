@@ -35,7 +35,7 @@ Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA c
 ### 4. [Wake Word Training](./04-training/training.md)
 Using the Google Colab notebook to train custom models for English and non-English wake words.
 
-### 5. [Voice Assistant Core](./05-voice_assist/voice_assistant.md)
+### 5. [Voice Assistant Core](./05-voice_assist/voice_assist.md)
 Installing the main Python package, dependencies, and Gemini API integration.
 
 ### 6. [Enclosure & Assembly](./06-enclosure/enclosure.md)
