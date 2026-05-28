@@ -23,41 +23,15 @@ HOTSPOT_PASSWORD       = "chochko123"
 HOTSPOT_IP             = "192.168.4.1"
 BUTTON_PIN             = 17
 PORTAL_TIMEOUT_SECONDS = 300
-MAX_LOG_FILES          = 10
 CREDENTIALS            = {}
 
 # --- Logging ---
-script_dir    = os.path.dirname(os.path.abspath(__file__))
-user_home_dir = os.path.dirname(script_dir)
-if not user_home_dir.startswith('/home'):
-    user_home_dir = '/root'
-
-LOG_DIR = os.path.join(user_home_dir, "logs", "chochko-wifi")
-os.makedirs(LOG_DIR, exist_ok=True)
-LOGFILE = os.path.join(
-    LOG_DIR,
-    f"portal-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.log"
-)
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def log(message):
     ts   = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{ts}] {message}"
     print(line)
-    with open(LOGFILE, "a") as f:
-        f.write(line + "\n")
-
-def rotate_logs(directory, max_files):
-    try:
-        files = sorted([
-            f for f in os.listdir(directory)
-            if f.startswith('portal-') and f.endswith('.log')
-        ])
-        for old in files[:max(0, len(files) - max_files)]:
-            os.remove(os.path.join(directory, old))
-    except Exception as e:
-        log(f"Log rotation error: {e}")
-
-rotate_logs(LOG_DIR, MAX_LOG_FILES)
 
 # --- LEDs (APA102 via SPI) ---
 # Fatal — hardware is required
