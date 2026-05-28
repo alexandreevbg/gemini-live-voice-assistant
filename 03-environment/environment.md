@@ -4,7 +4,7 @@ This section details the setup of the PipeWire audio server with Acoustic Echo C
 ## 1. Configure Environment Variables
 Download the .env template from the repository to your home directory
 ```bash
-wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-environment/.env -O ~/.env
+wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/.env -O ~/.env
 nano ~/.env
 ```
 This file stores sensitive environment variables, such as API keys and tokens. You should replace at least "YOUR_GEMINI_API_KEY" with your actual API_KEY. You can obtain your API_KEY from the [Google AI Studio](https://aistudio.google.com/). Other variables are optional. You can keep them commented out for now. If you have smart home (HA) or Spotify set up, you can uncomment the corresponding variables and add your tokens and keys.   
@@ -15,7 +15,7 @@ echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
 echo 'source ~/.venv/bin/activate' >> ~/.bashrc
 ``` 
 
-## 2. Audio Stack: PipeWire + AEC
+## 2. Install PipeWire + AEC
 PipeWire is used to manage audio streams and enable Acoustic Echo Cancellation (AEC), allowing the microphone to effectively filter out audio being played by the speaker.
 
 Install PipeWire and its related components.
@@ -184,7 +184,7 @@ systemctl --user status pipewire wireplumber pipewire-pulse
 # 7. Test AEC
 Get music clip
 ```bash
-wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-environment/music_48k.wav
+wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/music_48k.wav
 ```
 
 Play music and record speech at the same time for 10 sec

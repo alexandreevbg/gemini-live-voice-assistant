@@ -100,12 +100,18 @@ The device should blink once with blue light when it's ready. Of course, you can
 ---
 
 ### 3. Raspotify - Spotify Connect client
-To integrate with Spotify, we need to install **raspotify** - it creates a network player compatible with Spotify and Home Assistant:
+To integrate with Spotify, we need to install **raspotify**. It creates a network player compatible with Spotify and Home Assistant.
+
+1. install raspotify:
+
    ```bash
    sudo apt update
    curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
    sudo systemctl status raspotify
    ```
 
+2. Test the installation:
+Run Spotify on your phone connected to the same WiFi SSID. Play some music, open devices menu, and select raspotify(chochko).
+  
 ---
 [Return to Main README](../README.md)
