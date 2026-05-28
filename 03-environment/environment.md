@@ -1,5 +1,5 @@
 # Environment & Audio Stack
-This section details the setup of the Python virtual environment, the PipeWire audio server with Acoustic Echo Cancellation (AEC), and essential configuration files.
+This section details the setup of the PipeWire audio server with Acoustic Echo Cancellation (AEC), and essential configuration files.
 
 ## 1. Configure Environment Variables
 Download the .env template from the repository to your home directory
