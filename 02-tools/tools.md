@@ -54,12 +54,17 @@ You can open the portal with your phone or computer, select a new SSID from the 
    sudo raspi-config
    ```
    Select "Interfacing Options" -> "SPI" -> "Yes".
-3. Test the Wi-Fi configuration manually
+3. Get the source scripts
+   ```bash
+   cd ~
+   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/02-tools/wifi-portal
+   ```
+4. Test the Wi-Fi configuration manually
    ```bash
    sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
    ```
    When run, the device should blink once with blue light
-4. Create a one-shot service for the portal
+5. Create a one-shot service for the portal
    ```bash
    sudo nano /etc/systemd/system/wifi-config.service
    ```
@@ -86,9 +91,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    sudo reboot
    ```
 The device should blink once with blue light when it's ready. Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
-```bash
 
-```
 ---
 
 ### 3. Raspberry-Pi - Spotify Connect client
