@@ -25,7 +25,7 @@ Optimize the system for headless use and speed up SSH login:
    # Enable passwordless sudo for the current user
    echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_nopasswd
 
-   # Disable dynamic MOTD scripts to fix long login delays on Pi Zero 2W
+   # If login takes too much time, then disable motd scripts
    sudo chmod -x /etc/update-motd.d/*
    ```
 

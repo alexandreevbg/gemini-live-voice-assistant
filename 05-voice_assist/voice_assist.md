@@ -1,479 +1,595 @@
-# Gemini Live Voice Assistant
+# Voice Assistant — Installation & Testing Guide
 
-> **⚠️ WORK IN PROGRESS**
-> This repository is currently under construction. The code and models provided here are in active development.
+This guide covers installation of the voice assistant and integrations with Home Assistant and Spotify.
 
-## Project Overview
-This project contains instructions, tools and source code for creating a Multilingual Voice Assistant and includes:
-- Direct integration with **Gemini Live API**
-- On-device wake word detection using **OpenWakeWord** algorithms
-- Optional integration with **Home Assistant**
-- Optional integration with **Spotify**
+## 1. Install Voice Assistant Package
 
-The assistant is designed to run on a **Raspberry Pi Zero 2W** accompanied by a **Seeed Studio ReSpeaker 2-mic HAT**.
+1. Install System Dependencies
+```bash
+sudo apt update
+sudo apt install -y python3-dev portaudio19-dev alsa-utils
+```
 
-OpenWakeWord algorithms are extracted from: https://github.com/rhasspy/wyoming-satellite
+2. Install Python Packages
+```bash
+   pip install sounddevice websockets requests spotipy
+```
 
-## Repository Structure
-- **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord models in non-English languages
-- **`wifi_config/`**: Contains a script for a captive portal to configure the WiFi connection
-- **`voice_assist/`**: Contains the main Python scripts for running the Voice Assistant
-- **`patches/`**: System patches
+3. Move Source Files
+```bash
+mv ~/gemini-live-voice-assistant/05-voice_assist/voice_assist ~/voice_assist
+```
+
+4. Configuration
+
+Move the .env template from the repository to your home directory and populate with your actual credentials.
+```bash
+mv ~/gemini-live-voice-assistant/03-environment/.env ~
+nano .env
+```
+You should replace at least YOUR_GEMINI_API_KEY and YOUR_OPENWEATHER_API_KEY with real API_KEYs. Other variables are optional. While they are commented, the voice assistant will consider the related integrations as "not available". Once you obtain the Home Assistant and/or Spotify keys, you can uncomment the corresponding variables and populate them with your tokens and keys.
+
+#### To Obtain YOUR_GEMINI_API_KEY
+Visit [Google AI Studio](https://aistudio.google.com/), sign in, and click **"Get API key"** to generate your credential.
+
+#### To Obtain YOUR_OPENWEATHER_API_KEY
+Sign up at [OpenWeatherMap](https://openweathermap.org/api) and generate a new key under the **"My API keys"** tab in your dashboard.
+
+#### To Obtain YOUR_HOME_ASSISTANT_TOKEN
+In your Home Assistant UI, click your **User Profile** (bottom-left icon) → scroll to the bottom → **"Long-Lived Access Tokens"** → **"Create Token"**.
+
+#### To Obtain YOUR_SPOTIFY_CLIENT_ID and YOUR_SPOTIFY_CLIENT_SECRET
+Create an application at the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard). Ensure you set the **Redirect URI** to `http://127.0.0.1:8888/callback`.
+
+
+Add those two lines to your `~/.bashrc` file to automatically load your environment variables and activate your Python virtual environment when you start a new shell session.
+```bash
+echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
+echo 'source ~/.venv/bin/activate' >> ~/.bashrc
+``` 
+
+
+
+
+ You can also change the `GEMINI_MODEL` to a different model if you prefer.
+
+### 5.1 Edit config.py
+
+```python
+WAKEWORD_BACKEND = 'openwakeword'   # or 'microwakeword'
+WAKEWORD_MODEL   = '/home/YOUR_USERNAME/voiceAssist/models/your_model.tflite'
+WAKEWORD_THRESH  = 0.5
+
+GEMINI_MODEL  = 'models/gemini-2.5-flash-native-audio-latest'
+GEMINI_SYSTEM = 'You are a helpful home assistant named Chochko...'
+
+DIALOG_TIMEOUT = 10     # seconds of silence before ending dialog
+BUTTON_PIN     = 17     # GPIO pin (ReSpeaker button)
+LINE_DAC       = 66     # speaker volume % (adjust for your hardware)
+
+DEBUG = False           # True for full debug logging with timestamps
+```
+
+### 5.2 Create .env file
+
+```bash
+cat > ~/.env << 'EOF'
+GEMINI_API_KEY=your-gemini-api-key
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:8888/callback
+OPENWEATHER_API_KEY=your-openweather-key
+HA_TOKEN=your-home-assistant-token
+HA_URL=http://homeassistant.local:8123
+EOF
+chmod 600 ~/.env
+```
+
+### 5.3 Load .env in terminal sessions
+
+Add to `~/.bashrc`:
+```bash
+echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
+source ~/.bashrc
+```
+
 ---
-# Instructions
-The instructions below are arranged in the following sections:
-- **Obtaining a wake word model** - get a pre-trained model or create your own
-- **Prepare the system** - install required packages and apply patches
-- **Install and run the assistant** - install the Python code and run the assistant
-- **Create 3D-printed enclosure** - 3D printed models and interconnections
 
-## 🛠️ Obtaining a wake word model
-There are two options: use a pre-trained model or train your own.
+## Phase 6 — Spotify Setup
 
-### 1. Use a pre-trained model
-A large collection of community-trained models (mostly in English) is available in the following repository:
-https://github.com/fwartner/home-assistant-wakewords-collection
+### 6.1 Install raspotify (Spotify Connect device)
 
-### 2. Train a custom wake word in English
-To train a custom wake word model in English, use the following Google Colab notebook:
-https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
+```bash
+curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
+sudo systemctl disable raspotify   # disable system service
+sudo systemctl stop raspotify
+sudo systemctl mask raspotify      # prevent accidental start
+```
 
-### 3. Train a custom wake word in other languages
-To train a custom wake word model in other languages supported by Piper, use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **training/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
-- **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
-- **generate_samples_onnx.py** - the modified script working with ONNX models
-- **generate_samples.py** - the final script to be downloaded by the modified notebook
+Get Spotify credentials:
+```bash
+curl -sSL https://xevion.github.io/spotify-quickauth/run.sh | sh
+# Creates: ~/.cache/raspotify/credentials.json
+```
 
-Once you find a piper voice model for your language, use the appropriate Python script as follows:
-- make a local copy of the appropriate script on your computer
-- rename it to "generate_samples.py"
-- replace the model name in the script with the name of your desired model
-- store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
-- run the notebook stored in the same directory
+Create user service:
+```bash
+mkdir -p ~/.config/systemd/user
 
-The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
-- click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
-- find the line starting with "!wget "https://raw.githubusercontent.com/..."
-- replace the link on this line with the link to your URL containing your generate_samples.py script
-- run the cell to create and listen to a test example
-- run all cells and download the generated tflite model
-- save a copy of the modified notebook and rename it as you want
+cat > ~/.config/systemd/user/raspotify.service << 'EOF'
+[Unit]
+Description=Raspotify (Spotify Connect)
+After=pipewire.service wireplumber.service pipewire-pulse.service
+Wants=pipewire.service pipewire-pulse.service
 
-To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
+[Service]
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/librespot \
+    --name "Chochko" \
+    --bitrate 320 \
+    --format S32 \
+    --backend pulseaudio \
+    --device default \
+    --device-type speaker \
+    --initial-volume 100 \
+    --cache "/home/YOUR_USERNAME/.cache/raspotify"
+Restart=on-failure
+RestartSec=10
 
-In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word into the model filename.
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload
+systemctl --user enable raspotify
+systemctl --user start raspotify
+sleep 8
+systemctl --user status raspotify | grep Active
+```
+
+### 6.2 Authorize Spotify Web API
+
+Create Spotify app at https://developer.spotify.com/dashboard
+- Set redirect URI: `http://127.0.0.1:8888/callback`
+- Copy Client ID and Secret to `~/.env`
+
+Run one-time authorization:
+```bash
+source ~/.venv/bin/activate
+python ~/voiceAssist/spotify_auth.py
+# Open URL in browser → authorize → paste redirect URL back
+```
 
 ---
-## ⚙️ Prepare the system
-Preparations include the following installations:
-- Raspberry Pi OS Lite (64-bit)
-- Drivers for ReSpeaker 2-mic
-- Shared virtual environment for Python apps
-- Wi-Fi captive portal for Wi-Fi configuration
 
-If you intend to improve or expand the capabilities of this device beyond the scope of this guide, then I would recommend also to install a backup solution.
+## Phase 7 — sudo Permissions for WiFi Portal
 
-## 1. Install Raspberry Pi OS (64-bit) Lite
-Follow this procedure to install the latest Raspberry Pi OS:
-- Install and run **Raspberry Pi Imager** on your Windows, macOS, or Linux computer
-- For the device, select **Raspberry Pi Zero 2W**
-- For the OS, select **Raspberry Pi OS (other)** and then **Raspberry Pi OS (Legacy, 64-bit) Lite**.
-  > [IMPORTANT]: As of mid-2024, the standard "Raspberry Pi OS Lite" points to an unstable testing version (Debian Trixie). The "Legacy" version points to the required **stable** version (Debian Bookworm), which is necessary for driver compatibility.
-- For the storage, select your SD-Card connected to USB port
-- Decide the hostname of the device (I used "chocko")
-- Configure Localization and credentials parameters
-- Enter the initial connection parameters for your Wi-Fi
-- Enable the SSH connection and write OS on SD-Card
-- Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
+```bash
+echo "YOUR_USERNAME ALL=(ALL) NOPASSWD: /usr/bin/nmcli, /usr/sbin/reboot, /usr/sbin/poweroff" | \
+    sudo tee /etc/sudoers.d/chochko-wifi
+sudo chmod 440 /etc/sudoers.d/chochko-wifi
+sudo visudo -c -f /etc/sudoers.d/chochko-wifi
+```
 
-At the time of writing, the latest stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
+Allow Python to bind port 80:
+```bash
+sudo setcap 'cap_net_bind_service=+ep' \
+    $(readlink -f ~/.venv/bin/python)
+```
 
-## 2. Install Drivers for ReSpeaker 2-mic HAT
-**First**, to simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's onboard HDMI audio, making the ReSpeaker the sole audio device. Also, since Bluetooth is not used, disable it as well. For this edit the system config.txt file:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Change the following lines:
-   ```bash
-   dtparam=audio=off
-   dtoverlay=vc4-kms-v3d,noaudio
-   ```
-   And add the following line to the end of the file:
-   ```bash
-   dtoverlay=disable-bt             # disable bluetooth if not used
-   ```
+---
 
-**Second**, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
+## Phase 8 — Testing Individual Components
 
-For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Seeed Studio, and you can follow it if you can make some minor changes on the fly: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
-**or**<br>
-follow the compact version of the same, aligned to the latest Raspberry Pi OS:
-1. Build the driver for audio codec TLV320AIC3104:
-   ```bash
-   ## Install kernel
-   sudo apt update
-   sudo apt install raspberrypi-kernel-headers -y
-   sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git device-tree-compiler -y
-   git clone --depth=1 --branch rpi-6.12.y https://github.com/raspberrypi/linux.git
+Run all tests from `~/voiceAssist/` with venv active.
 
-   ## Copy code and a Makefile
-   mkdir ~/tlv320aic3x_i2c_driver
-   cd ~/tlv320aic3x_i2c_driver
-   cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
-   cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
-   cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
-   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
+### 8.1 Test SPI / LEDs
 
-   ## Build the driver 
-   make
-   sudo make install
-   sudo modprobe snd-soc-tlv320aic3x-i2c
+```bash
+source ~/.venv/bin/activate
+python3 -c "
+import spidev, time
+spi = spidev.SpiDev()
+spi.open(0, 0)
+spi.max_speed_hz = 1000000
+def write(r, g, b):
+    buf = [0]*4
+    for _ in range(3):
+        buf += [0xFF, b, g, r]
+    buf += [0xFF]*4
+    spi.xfer2(buf)
+write(0, 0, 80);  time.sleep(1)   # blue
+write(80, 0, 80); time.sleep(1)   # magenta
+write(80, 0, 0);  time.sleep(1)   # red
+write(0, 0, 0)                    # off
+spi.close()
+print('LEDs OK')
+"
+```
 
-   ## Check logs
-   lsmod | grep tlv320
-   dmesg | grep tlv320
+### 8.2 Test Microphone
 
-   ## Cleanup source files
-   rm -rf ~/linux
-   ```
-2. Install the overlay
-   ```bash
-   curl https://raw.githubusercontent.com/Seeed-Studio/seeed-linux-dtoverlays/refs/heads/master/overlays/rpi/respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dts
-   dtc -I dts respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dtbo
-   sudo dtoverlay respeaker-2mic-v2_0-overlay.dtbo
-   sudo cp respeaker-2mic-v2_0-overlay.dtbo /boot/firmware/overlays
-   ```
+```bash
+source ~/.venv/bin/activate
+python3 -c "
+import sounddevice as sd, numpy as np
+print('Devices:')
+print(sd.query_devices())
+print()
 
-3. Add overlay configuration to config.txt:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Add the following line to the end of the file:
-   ```bash
-   dtoverlay=respeaker-2mic-v2_0-overlay
-   ```
+chunks = []
+def cb(indata, frames, t, status):
+    chunks.append(indata.copy())
+    if len(chunks) == 1:
+        print(f'dtype={indata.dtype} shape={indata.shape}')
 
-For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below: 
-1. Get the updated driver sources from HinTak: 
-   ```bash
-   cd ~
-   git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
-   ```
-2. Patch the file seeed-voicecard.c file
-   ```bash
-   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/seeed-voicecard.c
-   mv ~/seeed-voicecard/seeed-voicecard.c ~/seeed-voicecard/
-   ```
-3. Build and install the driver
-   ```bash
-   cd ~/seeed-voicecard
-   sudo ./install.sh
-   ```
-4. Add overlay configuration to config.txt:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Add the following line to the end of the file:
-   ```bash
-   dtoverlay=seeed-2mic-voicecard
-   ```
+with sd.InputStream(samplerate=48000, channels=2, dtype='int32',
+                    blocksize=3840, callback=cb):
+    sd.sleep(2000)
+print(f'Received {len(chunks)} chunks - Mic OK')
+"
+```
 
-**And finally, for both versions**, reboot the device and test the ReSpeaker with ALSA
-1. Reboot the device
-   ```bash
-   sudo reboot
-   ```
-2. Check if Respeaker is found and is the only device used by aplay and arecord. It's card number should be 0 and the name like "seeed2mic..."
-   ```bash
-   aplay -l
-   arecord -l
-   ```
-3. Set Capture and PCM/Speaker volumes
-   Run `alsamixer` and configure the following important sliders:
-   - **PCM / Master**: Digital playback volume (keep around 80%).
-   - **Speaker / Line**: Volume for the JST connector (white plug).
-   - **Headphone**: Volume for the 3.5mm jack.
-   - **PGA / Capture**: **Microphone Analog Gain**. This is critical. Set to ~50-70%. If too high, audio clips; if too low, it won't hear you.
-   - **AGC**: Automatic Gain Control. Recommended to turn **OFF** for consistent wake word detection.
+### 8.3 Test Playback / Speaker
 
-   > **Note on Volume & Echo**: The ReSpeaker HAT does not have hardware echo cancellation. If you play music (like Spotify) very loudly, the microphone will pick it up and may not be able to hear your wake word. It is recommended to keep the playback volume at a moderate level for reliable performance.
+```bash
+source ~/.venv/bin/activate
+python3 -c "
+import sounddevice as sd, numpy as np
 
-4. Test the recording:
-   ```bash
-   arecord -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
-   aplay test.wav
-   ```
-## 3. Install a Shared Virtual Environment for Python Apps
-To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment strategy: install heavy libraries (like numpy and gpiozero) globally via `apt` to save installation time and disk space, and then create a shared virtual environment that can access them.
+# Play 1 second 440Hz tone
+t    = np.linspace(0, 1, 48000, False)
+tone = (np.sin(440 * 2 * np.pi * t) * 0.3 * 32767).astype(np.int16)
+stereo = np.column_stack([tone, tone])
+sd.play(stereo, samplerate=48000, dtype='int16')
+sd.wait()
+print('Speaker OK')
+"
+```
 
-1. Install system dependencies:
-   ```bash
-   sudo apt update
-   sudo apt install build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
-   ```
-2. Create the shared virtual environment:
-   ```bash
-   python3 -m venv --system-site-packages ~/.venv
-   ```
-   This environment (`~/.venv`) will be used by both the Wi-Fi portal and the Voice Assistant.
+### 8.4 Test Button
 
-3. Get software packages for the Voice Assistant:
-   ```bash
-   cd ~
-   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git
-   mv gemini-live-voice-assistant/voiceAssist .
-   mv gemini-live-voice-assistant/wifi-config .
-   rm -rf gemini-live-voice-assistant
-   ```
+```bash
+source ~/.venv/bin/activate
+python3 -c "
+from gpiozero import Button
+import time
+btn = Button(17, pull_up=True)
+print('Press button (GPIO17)...')
+btn.wait_for_press(timeout=10)
+print('Button pressed - GPIO OK')
+"
+```
 
-## 4. Install Wi-Fi Captive Portal for WiFi Configuration
-The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Grove port on ReSpeaker 2-mic. Pressing and holding both buttons during system boot activates the Wi-Fi captive portal having:
-- SSID: "Chochko-WiFi-Setup" 
-- password: "chochko123"
-- the portal is available on the standard address 192.168.4.1
-You can open the portal with your phone or computer, select a new SSID from the list, and enter the password. These settings will be used after an automatic reboot. If the new SSID is unavailable, the Voice Assistant will attempt to connect to the previous SSID after the next reboot.
+### 8.5 Test Wake Word Detection
 
-1. Install the LED driver library into the shared environment:
-   ```bash
-   ~/.venv/bin/pip install --upgrade pip setuptools
-   ~/.venv/bin/pip install apa102-pi
-   ```
-2. Enable SPI interface in the Raspberry Pi configuration:
-   ```bash
-   sudo raspi-config
-   ```
-   Select "Interfacing Options" -> "SPI" -> "Yes".
-3. Test the Wi-Fi configuration manually
-   ```bash
-   sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
-   ```
-   When run, the device should blink once with blue light
-4. Create a one-shot service for the portal
-   ```bash
-   sudo nano /etc/systemd/system/wifi-config.service
-   ```
-   Add the following content to the file. This service runs as `root` after the network comes online, executing the portal script from the correct directory and using the Python virtual environment.
-   > **Note**: Replace `chochko` with your actual username if it's different.
-   ```ini
-   [Unit]
-   Description=Wi-Fi Configuration Portal
-   Wants=network-online.target
-   After=network-online.target
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 -c "
+import sys, time, numpy as np
+from capture import MicCapture
+from wakeword import create_detector
+import config
 
-   [Service]
-   Type=oneshot
-   User=root
-   WorkingDirectory=/home/chochko/wifi-config
-   ExecStart=/home/chochko/.venv/bin/python /home/chochko/wifi-config/wifi_portal.py
+detector = create_detector(
+    config.WAKEWORD_BACKEND,
+    config.WAKEWORD_MODEL,
+    config.WAKEWORD_THRESH
+)
 
-   [Install]
-   WantedBy=multi-user.target
-   ```
-   Then, enable the service to run on boot:
-   ```bash
-   sudo systemctl enable wifi-config.service
-   sudo reboot
-   ```
-The device should blink once with blue light when it's ready. Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
-   
-## 5. Install a Backup Solution (optional)
-For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficiently creates a complete backup of a Raspberry Pi in the form of an image file.
+detected = [False]
 
-1. Install NFS and the backup application
-   ```bash
-   sudo apt update
-   sudo apt install nfs-common git -y
-   git clone https://github.com/seamusdemora/RonR-RPi-image-utils
-   sudo install --mode=755 ./RonR-RPi-image-utils/image-* /usr/local/sbin
-   ```
-2. Mount an external drive to store the image and run backup
-   ```bash
-   sudo mount -t nfs -o proto=tcp,port=2049 <NAS IP address>/<target directory> /mnt
-   sudo image-backup -o -v
-   ```
-   After running the command, enter the name of the target image to /mnt/\<image name\>.img, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
-   Then, you can flash the image by Raspberry Pi Imager from the resulting or compressed image. 
+def on_detect():
+    print('WAKE WORD DETECTED!')
+    detected[0] = True
 
-## 🎙️ Install and run Voice Assistant
-Since the voice assistant is based on communication with Gemini Live API, you should obtain a GEMINI_API_KEY.
-1. Go to [Google AI Studio](https://aistudio.google.com/) and log in with your Google account.
-2. Click on **Get API key** and create a key for a new project.
-3. Copy the key; you will need to export it as an environment variable before running the assistant.
+import asyncio
+loop = asyncio.new_event_loop()
+detector.set_loop(loop)
+detector.set_on_detect(on_detect)
 
-Follow with installations below:
+mic = MicCapture()
+mic.add_consumer(detector.process)
+mic.start()
 
-1. Install the required global Python libraries
-   ```bash
-   sudo apt update
-   sudo apt install -y python3-pip python3-dev
-   sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0 libopenblas-dev
-   ```
+print(f'Listening for wake word ({config.WAKEWORD_BACKEND})...')
+print('Say your wake word now (10 seconds)')
 
-2. Install the math, Gemini API, and Spotify libraries
-   ```bash
-   ~/.venv/bin/pip install --upgrade pip setuptools wheel
-   ~/.venv/bin/pip install "numpy<2" tflite-runtime
-   ~/.venv/bin/pip install pyaudio spotipy
-   ~/.venv/bin/pip cache purge
-   ~/.venv/bin/pip install -q -U google-genai
-   ```
+start = time.time()
+while not detected[0] and time.time() - start < 10:
+    time.sleep(0.1)
 
-3. Set the API key and execute the main script:
-   ```bash
-   export GEMINI_API_KEY="put_your_api_key_here"
-   "$HOME/.venv/bin/python" -m voiceAssist.main
-   ```
+mic.stop()
+if not detected[0]:
+    print('Wake word not detected in 10s')
+"
+```
 
-4. To confugre the voiceassist service, create a file:
-   ```bash
-   mkdir -p ~/.config/systemd/user
-   nano ~/.config/systemd/user/voiceassist.service
-   ```
-   Then copy-paste the following content, but replace `/home/chochko` with your actual home directory path:
-   ```bash
-   [Unit]
-   Description=VoiceAssist Service
-   After=sound.target
-   Requires=sound.target
+### 8.6 Test Gemini Connection
 
-   [Service]
-   Type=simple
-   WorkingDirectory=/home/chochko
-   ExecStart=/home/chochko/.venv/bin/python -m voiceAssist.main
-   Environment="PATH=/home/chochko/.venv/bin:/usr/local/bin:/usr/bin"
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Restart=on-failure
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 -c "
+import asyncio, os, sys
+sys.path.insert(0, '.')
+import config
 
-   [Install]
-   WantedBy=default.target
-   ```
-   Populate your Gemini API Key above, run, and check the service:
-   ```bash
-   sudo loginctl enable-linger chochko
-   sudo usermod -aG gpio chochko
-   systemctl --user enable voiceassist.service
-   systemctl --user daemon-reload
-   systemctl --user start voiceassist.service
-   systemctl --user status voiceassist.service
-   ```
+async def test():
+    import websockets, json
+    url = (
+        'wss://generativelanguage.googleapis.com/ws/'
+        'google.ai.generativelanguage.v1beta.'
+        f'GenerativeService.BidiGenerateContent?key={config.GEMINI_API_KEY}'
+    )
+    try:
+        ws = await asyncio.wait_for(websockets.connect(url), timeout=10)
+        setup = json.dumps({
+            'setup': {
+                'model': config.GEMINI_MODEL,
+                'generation_config': {'response_modalities': ['AUDIO']}
+            }
+        })
+        await ws.send(setup)
+        msg = json.loads(await ws.recv())
+        print('Gemini response:', list(msg.keys()))
+        await ws.close()
+        print('Gemini Live connection OK')
+    except Exception as e:
+        print(f'Gemini connection FAILED: {e}')
 
-## 🏠 Add an integration with Home Assistant (optional)
-The integration with Home Assistant is already included in the voice assistant source code. The only thing you have to do is to get the unique token and add it to the environment.
-1. Go to Home Assistant dashboard
-2. Click on your username at bottom-left
-3. Click on Security tab
-4. Scroll down to the Long-lived access tokens
-5. Click on Create Token button and name the token
-6. Copy the token and edit the voiceassist service configuration
-   ```bash
-    nano ~/.config/systemd/user/voiceassist.service
-   ```
-7. Add one more Environment line
-   ```bash
-   ...
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
-   ...
-   ```
-8. Save and restart the service:
-   ```bash
-   systemctl --user restart voiceassist.service
-   ```
-Your Home Assistant should be already configured and running. To make your Home Assistant a multi-language one, you should define aliases for your devices.
+asyncio.run(test())
+"
+```
 
-## 🎧 Add an integration with Spotify (optional)
-To integrate with Spotify, we need to:
-- install **raspotify** - it creates a network player compatible with Spotify and Home Assistant
-- Get **Spotify credentials** and add them to the environment variables
-- create a **Spotify cache** file - it allows the voice assistant to control Spotify
-- setup **ALSA Dmix** mode - it allows playing both: Gemini and Spotify on the same speaker
-1. To install raspotify:
-   ```bash
-   sudo apt update
-   curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
-   sudo systemctl status raspotify
-   ```
+### 8.7 Test Spotify
 
-2. To get Spotify credentials:
-- go to [Spotify for Developers](https://developer.spotify.com/dashboard/applications) and log in
-- select Home >> Dashboard and click on Create app button
-- Copy the Client ID and Client Secret and add them to the environment variables in service configuration:
-   ```bash
-   nano ~/.config/systemd/user/voiceassist.service
-   ```
-   ```bash
-   ...
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
-   Environment=SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
-   Environment=SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
-   ...
-   ```
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 -c "
+import sys, os, time
+sys.path.insert(0, '.')
+from spotify import SpotifyController
+import logging
+logging.basicConfig(level=logging.INFO)
 
-3. Create a Spotify cache
-   ```bash
-   export SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
-   export SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
-   ~/.venv/bin/python voiceAssist/setup_spotify.py
-   ```
-- Copy the long URL starting with https://accounts.spotify.com/authorize... from the terminal.
-- Open it in your browser and log in to your Spotify account and click Agree
-- Your browser will redirect you to a page starting with http://127.0.0.1:8888/callback... Ignore any message saying "This site can't be reached" or "Connection refused".
-- Copy the above address (authorization code) and paste it into the terminal after "Enter URL:" and press enter
+sp = SpotifyController()
+ok = sp.connect()
+print('Connected:', ok)
+if ok:
+    devices = sp._sp.devices()
+    print('Devices:')
+    for d in devices['devices']:
+        print(f'  {d[\"name\"]} active={d[\"is_active\"]}')
+    current = sp.get_current()
+    print('Now playing:', current)
+    print()
+    print('Testing volume...')
+    sp.set_volume(50)
+    time.sleep(1)
+    sp.set_volume(100)
+    print('Spotify OK')
+"
+```
 
-4. To setup ALSA dmix and Raspotify sink and edit raspotify config file
-   ```bash
-   sudo nano /etc/asound.conf
-   ```
-   Paste the following content to enable audio mixing (allowing both the assistant and Spotify to play audio simultaneously):
-   ```bash
-   pcm.dmixed {
-       type dmix
-       ipc_key 1024
-       ipc_key_add_uid 0
-       ipc_perm 0666
-       slave {
-           pcm "hw:0,0"
-           period_time 0
-           period_size 1024
-           buffer_size 8192
-           rate 48000
-       }
-       bindings {
-           0 0
-           1 1
-       }
-   }
+### 8.8 Test Weather
 
-   pcm.dsnooped {
-       type dsnoop
-       ipc_key 1025
-       ipc_key_add_uid 0
-       ipc_perm 0666
-       slave {
-           pcm "hw:0,0"
-           channels 2
-           rate 48000
-       }
-   }
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 -c "
+import sys
+sys.path.insert(0, '.')
+import weather, location
 
-   pcm.!default {
-       type asym
-       playback.pcm "plug:dmixed"
-       capture.pcm "plug:dsnooped"
-   }
-   ```
-   Then edit the raspotify config:
-   ```bash
-   sudo nano /etc/raspotify/conf
-   ```
-   Uncomment the following two lines and add values to them:
-   ```bash
-   LIBRESPOT_BACKEND="alsa"
-   LIBRESPOT_DEVICE="default"
-   LIBRESPOT_MIXER="softvol"
-   ```
-   Save and restart raspotify:
-   ```bash
-   sudo systemctl restart raspotify
-   ```
+loc = location.get_current()
+print('Location:', loc)
+w = weather.get_weather(loc['town'], loc['country'])
+print('Weather:', w)
+print('Formatted:', weather.format_for_gemini(w))
+"
+```
+
+### 8.9 Test Home Assistant
+
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 ha_test.py
+```
+
+The interactive test script:
+1. Lists all loaded entities and aliases
+2. Tests entity search by name/alias
+3. Shows device status
+4. Interactive control prompt
+
+### 8.10 Test Location
+
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python3 -c "
+import sys
+sys.path.insert(0, '.')
+import location
+loc = location.get_current()
+print('Location:', loc)
+print('Prompt string:', location.format_for_prompt(loc))
+"
+```
+
+---
+
+## Phase 9 — Run Voice Assistant From Command Line
+
+### Basic run
+
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python main.py
+```
+
+### Run with log saved to file
+
+```bash
+source ~/.venv/bin/activate
+cd ~/voiceAssist
+python main.py 2>&1 | tee ~/voiceAssist/session.log
+```
+
+### Run with debug logging
+
+In `config.py` set `DEBUG = True`, then:
+```bash
+python main.py 2>&1 | tee ~/voiceAssist/debug.log
+```
+
+### Check for false wake word detections
+
+```bash
+grep "score" ~/voiceAssist/session.log
+grep "Wake word" ~/voiceAssist/session.log
+```
+
+---
+
+## Phase 10 — Systemd Autostart Services
+
+### Create voice assistant service
+
+```bash
+cat > ~/.config/systemd/user/voiceassist.service << 'EOF'
+[Unit]
+Description=Chochko Voice Assistant
+After=pipewire.service wireplumber.service pipewire-pulse.service raspotify.service
+Wants=pipewire.service pipewire-pulse.service raspotify.service
+
+[Service]
+WorkingDirectory=/home/YOUR_USERNAME/voiceAssist
+EnvironmentFile=/home/YOUR_USERNAME/.env
+ExecStartPre=/bin/sleep 10
+ExecStart=/home/YOUR_USERNAME/.venv/bin/python main.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal+console
+StandardError=journal+console
+SyslogIdentifier=voiceassist
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload
+systemctl --user enable voiceassist
+```
+
+### Enable linger (start services at boot without login)
+
+```bash
+sudo loginctl enable-linger YOUR_USERNAME
+loginctl show-user YOUR_USERNAME | grep Linger
+# Expected: Linger=yes
+```
+
+### Start and verify all services
+
+```bash
+systemctl --user start voiceassist
+sleep 12
+
+systemctl --user status \
+    pipewire wireplumber pipewire-pulse \
+    raspotify voiceassist \
+    | grep -E "Active|Main PID"
+```
+
+All 5 should show `active (running)`.
+
+### View logs
+
+```bash
+# Follow live logs
+journalctl --user -u voiceassist -f
+
+# Last 50 lines
+journalctl --user -u voiceassist -n 50
+
+# Filter for errors only
+journalctl --user -u voiceassist -n 100 | grep -E "ERROR|WARNING"
+```
+
+---
+
+## Quick Verification Checklist
+
+```
+Hardware:
+[ ] SPI enabled (ls /dev/spidev*)
+[ ] LEDs blink blue on test
+[ ] Mic records audio (non-zero samples)
+[ ] Speaker plays tone
+[ ] Button detected on GPIO17
+
+Software:
+[ ] Wake word detected within 10s
+[ ] Gemini WebSocket connects
+[ ] Spotify device visible
+[ ] Weather returns data
+[ ] Home Assistant loads entities
+
+Services (after reboot):
+[ ] pipewire active
+[ ] wireplumber active
+[ ] pipewire-pulse active
+[ ] raspotify active
+[ ] voiceassist active
+```
+
+---
+
+## Common Issues
+
+### SPI permission denied
+```bash
+# Verify SPI enabled
+ls /dev/spidev*
+# If missing: sudo raspi-config nonint do_spi 0 && sudo reboot
+```
+
+### No audio devices found
+```bash
+systemctl --user status pipewire
+systemctl --user restart pipewire wireplumber
+```
+
+### Spotify token expired
+```bash
+rm -f ~/.spotify_cache
+python ~/voiceAssist/spotify_auth.py
+```
+
+### Home Assistant not connecting
+```bash
+# Test connectivity
+curl -H "Authorization: Bearer $HA_TOKEN" \
+     http://homeassistant.local:8123/api/ | python3 -m json.tool
+```
+
+### Wake word not detecting
+```bash
+# Check audio levels
+alsamixer -c 0
+# Adjust PGA level (target: speech clearly audible)
+```
+
+### Environment variables not loaded in service
+```bash
+# Verify .env has no 'export' prefix
+grep "^export" ~/.env   # should return nothing
+# Fix if needed:
+sed -i 's/^export //' ~/.env
+```

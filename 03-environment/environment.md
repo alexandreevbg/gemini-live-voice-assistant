@@ -1,21 +1,7 @@
 # Environment & Audio Stack
 This section details the setup of the PipeWire audio server with Acoustic Echo Cancellation (AEC), and essential configuration files.
 
-## 1. Configure Environment Variables
-Download the .env template from the repository to your home directory
-```bash
-wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/.env -O ~/.env
-nano ~/.env
-```
-This file stores sensitive environment variables, such as API keys and tokens. You should replace at least "YOUR_GEMINI_API_KEY" with your actual API_KEY. You can obtain your API_KEY from the [Google AI Studio](https://aistudio.google.com/). Other variables are optional. You can keep them commented out for now. If you have smart home (HA) or Spotify set up, you can uncomment the corresponding variables and add your tokens and keys.   
-
-Add those two lines to your `~/.bashrc` file to automatically load your environment variables and activate your Python virtual environment when you start a new shell session.
-```bash
-echo 'set -a; source ~/.env; set +a' >> ~/.bashrc
-echo 'source ~/.venv/bin/activate' >> ~/.bashrc
-``` 
-
-## 2. Install PipeWire + AEC
+## 1. Install PipeWire + AEC
 PipeWire is used to manage audio streams and enable Acoustic Echo Cancellation (AEC), allowing the microphone to effectively filter out audio being played by the speaker.
 
 Install PipeWire and its related components.
@@ -33,7 +19,7 @@ pipewire --version
 ```
 The expected version is 1.4.2 or newer.
 
-## 3. Set AEC config
+## 2. Set AEC config
 Create the necessary configuration directories and files for PipeWire and WirePlumber.
 ```bash
 mkdir -p ~/.config/pipewire/pipewire.conf.d ~/.config/wireplumber/wireplumber.conf.d
@@ -143,7 +129,7 @@ monitor.alsa.rules = [
 ]
 ```
 
-## 4. Wipe the cached state and start fresh
+## 3. Wipe the cached state and start fresh
 
 Wipe any cached PipeWire state and restart the services to apply the new configuration.
 ```bash
@@ -152,13 +138,13 @@ rm -rf ~/.local/state/pipewire/*
 systemctl --user start pipewire wireplumber pipewire-pulse
 ```
 
-## 5. Force the metadata (Optional, but recommended)
+## 4. Force the metadata (Optional, but recommended)
 ```bash
 pw-metadata -n settings 0 clock.force-rate 48000
 pw-metadata -n settings 0 clock.force-quantum 480
 ```
 
-## 6. Check and set the default audio nodes
+## 5. Check and set the default audio nodes
 Identify the IDs for `aec_input` and `aec_output` and set them as default.
 > **Note**: This step is critical. WirePlumber may default back to the hardware nodes until you manually "lock" the defaults. This setting is saved persistently in `~/.local/state/wireplumber/`.
 
@@ -195,7 +181,7 @@ And check the default audio devices again
 wpctl status # Look for aec_input and aec_output IDs
 ```
 
-# 7. Test AEC
+## 6. Test AEC
 Get music clip
 ```bash
 wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/music_48k.wav
