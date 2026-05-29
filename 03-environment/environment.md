@@ -72,10 +72,15 @@ context.modules = [
       audio.position = [ MONO ]
 
       webrtc.high_pass_filter = true
-      webrtc.noise_suppression = true # You can likely turn this on now with the saved CPU
+      webrtc.noise_suppression = true
       webrtc.voice_detection = false
-      webrtc.gain_control = false
-      webrtc.extended_filter = false
+      webrtc.gain_control = true
+      webrtc.experimental_agc = true
+      webrtc.limiter = true
+      webrtc.extended_filter = true
+      webrtc.delay_agnostic = true
+      webrtc.experimental_ns = true
+      webrtc.transient_suppression = true
 
       capture.props = {
         node.name = "aec_capture"
