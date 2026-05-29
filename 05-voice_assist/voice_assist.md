@@ -5,7 +5,7 @@ This guide covers installation of the voice assistant and integrations with Home
 ## 1. Set API keys for integrations
 Move the .env template from the repository to your home directory and open it to populate with your actual credentials.
 ```bash
-mv ~/gemini-live-voice-assistant/03-environment/.env ~
+cp ~/gemini-live-voice-assistant/03-environment/.env ~
 chmod 600 ~/.env
 nano .env
 ```
