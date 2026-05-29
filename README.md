@@ -1,24 +1,40 @@
 # Chochko: Multilingual Gemini Voice Assistant
 
-A high-performance, private voice assistant for Raspberry Pi Zero 2W, featuring multilingual wake word detection and Google Gemini Live integration.
-
 > **⚠️ WORK IN PROGRESS**
 > This repository is currently under construction. The code and models provided here are in active development.
 
-## ✨ Project Preview
+A high-performance, private voice assistant, featuring multilingual wake word detection and Google Gemini Live integration.
 
-Chochko is a cutting-edge voice assistant designed for the **Raspberry Pi Zero 2W**, leveraging the **Seeed Studio ReSpeaker 2-mic HAT v2.0** for robust audio input. Key highlights include:
+## Project Overview
+Project highlights:
+- **Hardware:** Raspberry Pi + ReSpeaker 2-Mic v2.0
+- **Platform:** Raspberry Pi OS Trixie (Debian 13) · Python 3.13 · aarch64
+- **Advanced Audio Processing:** Utilizes PipeWire with Acoustic Echo Cancellation (AEC) for voice capture
+- **On-Device Wake Word Detection:** Efficient and private wake word recognition based on OpenWakeWord
+- **Gemini Live Integration:** Seamless conversational AI powered by Google's **Gemini Live API**
 
-- **Gemini Live Integration:** Seamless conversational AI powered by Google's **Gemini Live API**.
-- **On-Device Wake Word Detection:** Efficient and private wake word recognition directly on the device.
-- **Advanced Audio Processing:** Utilizes Pipewire with Acoustic Echo Cancellation (AEC) for clear voice capture even during audio playback.
-- **Smart Home Connectivity:** Optional integrations with **Home Assistant** for smart device control and **Spotify** for music streaming.
----
+Optional features:
+- **Custom Wake Word** Training a custom wake word, provided Bulgarian **"Чочко"** as an example
+- **Home Assistant** Optional integration for smart device control
+- **Spotify** for music streaming from Spotify or Home Assistant Media Player
 
-## Repository Structure
-- **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord models in non-English languages
+More technical details:
+- **Linux Kernel** 6.18.29+rpt-rpi-v8 · aarch64
+- **Python version** 3.13.5
+- **openwakeword** 0.6.0 (built from source)
+- **TFLite backend** ai-edge-litert (replaces tflite-runtime)
+- **Inference** TFLite + ONNX Runtime 1.24.4
 
-## 🚀 Implementation Roadmap
+## Repository structure
+Besides a specific instruction file in each folder, you can find the related resources if any:
+- **01-platform** - Makefile to compile and setup ReSpeaker drivers and ReSpeaker schematic diagram
+- **02-tools** - Python scripts for headless WiFi captive portal
+- **03-environment** - template for definition of environment variables and music clip for test AEC
+- **04-wakeword** - Colab notebook for training non-English wake words 
+- **05-voice_assist** - the voice assistant package in Python
+- **06-enclosure** - 3D printing files (STL), exploded component views, and hardware wiring diagrams
+
+## Implementation Roadmap
 
 Follow these steps in order to build your assistant:
 
@@ -27,24 +43,23 @@ Follow these steps in order to build your assistant:
 Hardware specifications, flashing Raspberry Pi OS (Trixie), and compiling ReSpeaker 2-mic v2.0 drivers.
 
 ### 2. [Python and Tools](./02-tools/tools.md)
-Instructions for the system backup tool, headless Wi-Fi captive portal, and Raspotify integration.
+Create a common Python environment, and install the system backup tool, headless Wi-Fi captive portal, and Raspotify integration.
 
 ### 3. [Environment & Audio Stack](./03-environment/environment.md)
-Setting up Pipewire with AEC (Acoustic Echo Cancellation), Python `venv`, ALSA configurations, and system `.env` and '.bashrc' files.
+Install, setup, and test PipeWire with AEC (Acoustic Echo Cancellation).
 
-### 4. [Wake Word Training](./04-training/training.md)
-Using the Google Colab notebook to train custom models for English and non-English wake words.
+### 4. [Wake Word Training](./04-wakeword/wakeword.md)
+Obtain a wake word model, using Colab notebook to train custom models for English and non-English wake words, install openWakeWord and test it.
 
 ### 5. [Voice Assistant Core](./05-voice_assist/voice_assist.md)
-Installing the main Python package, dependencies, and Gemini API integration.
+Install, setup and test the main Python package, Gemini API integration, and optional Home Assistant and Spotify integrations.
 
 ### 6. [Enclosure & Assembly](./06-enclosure/enclosure.md)
-3D printing files (STL), exploded component views, and final hardware wiring diagrams.
+An enclosure for the voice assistant in the form of 3D printing files (STL), exploded component view, and a wiring diagram.
 
 ---
-
-----
------
+---
+---
 ## 📜 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-----
+This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit.) file for details.
+
