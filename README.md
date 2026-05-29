@@ -14,16 +14,16 @@ Project highlights:
 - **Gemini Live Integration:** Seamless conversational AI powered by Google's **Gemini Live API**
 
 Optional features:
-- **Custom Wake Word** Training a custom wake word, provided Bulgarian **"Чочко"** as an example
-- **Home Assistant** Optional integration for smart device control
-- **Spotify** for music streaming from Spotify or Home Assistant Media Player
+- **Custom Wake Word:** Training a custom wake word, provided Bulgarian **"Чочко"** as an example
+- **Home Assistant:** Optional integration for smart device control
+- **Spotify:** for music streaming from Spotify or Home Assistant Media Player
 
 More technical details:
-- **Linux Kernel** 6.18.29+rpt-rpi-v8 · aarch64
-- **Python version** 3.13.5
-- **openwakeword** 0.6.0 (built from source)
-- **TFLite backend** ai-edge-litert (replaces tflite-runtime)
-- **Inference** TFLite + ONNX Runtime 1.24.4
+- **Linux Kernel:** 6.18.29+rpt-rpi-v8 · aarch64
+- **Python version:** 3.13.5
+- **openwakeword:** 0.6.0 (built from source)
+- **TFLite backend:** ai-edge-litert (replaces tflite-runtime)
+- **Inference:** TFLite + ONNX Runtime 1.24.4
 
 ## Repository structure
 Besides a specific instruction file in each folder, you can find the related resources if any:
@@ -36,7 +36,7 @@ Besides a specific instruction file in each folder, you can find the related res
 
 ## Implementation Roadmap
 
-Follow these steps in order to build your assistant:
+Follow these steps to build your voice assistant:
 
 ----
 ### 1. [Platform Setup](./01-platform/platform.md)
@@ -61,5 +61,6 @@ An enclosure for the voice assistant in the form of 3D printing files (STL), exp
 ---
 ---
 ## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit.) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/license/mit) file for details.
 
+---
