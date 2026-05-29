@@ -37,7 +37,6 @@ In addition to the `target_word` field, the notebook includes a `target_model_na
 ## Install openWakeWord
 
 ### 1. System Dependencies
-
 Install required system libraries before any Python packages:
 
 ```bash
@@ -49,104 +48,69 @@ sudo apt-get install -y portaudio19-dev python3-dev libasound2-dev \
 > `portaudio19-dev` is required to build PyAudio from source.  
 > `libspeexdsp-dev` is required to build speexdsp-ns from source.
 
----
-
 ### 2. Install PyAudio
-
 ```bash
 pip install pyaudio
 ```
 
-> You may see unrelated warnings about `types-seaborn` dependencies — these are harmless and can be ignored.
-
----
-
 ### 3. Install speexdsp-ns (from source)
-
-No prebuilt wheel exists for Python 3.13 + aarch64. Build from source:
-
-**3a. Download the zip on a PC and transfer to the Pi:**
-
+Prebuilt wheels remain unavailable for Python 3.13 + aarch64 on PyPI. Building from source is required.
 ```bash
-# Download on your PC:
-# https://github.com/TeaPoly/speexdsp-ns-python/archive/refs/heads/main.zip
-
-# Transfer to Pi:
-scp speexdsp-ns-python-main.zip pi@<pi-ip>:~
-```
-
-**3b. Build and install on the Pi:**
-
-```bash
+wget https://github.com/TeaPoly/speexdsp-ns-python/archive/refs/heads/main.zip -O speexdsp-ns-python-main.zip
 cd ~
 unzip speexdsp-ns-python-main.zip
 cd speexdsp-ns-python-main
 pip install .
 ```
 
----
-
 ### 4. Install ai-edge-litert
-
-`tflite-runtime` has no Python 3.13 wheels. Use Google's official replacement:
-
+While `tflite-runtime` is deprecated for newer Python versions. `ai-edge-litert` is now the stable and official Google's successor for Python 3.13:
 ```bash
 pip install ai-edge-litert
 ```
+> You may see unrelated warnings about `types-seaborn` dependencies — these are harmless and can be ignored.
 
-> `ai-edge-litert` is Google's official successor to `tflite-runtime` with the same functionality.
-
----
-
-### 5. Install openwakeword 0.6.0 (from source)
-
-**5a. Download and transfer to the Pi:**
-
+### 5. Install openwakeword (from source)
+First, you can check if a newer version of `openwakeword` has been released on PyPI:
 ```bash
-# Download on your PC:
-# https://github.com/dscripka/openWakeWord/archive/refs/tags/v0.6.0.zip
-
-scp openWakeWord-0.6.0.zip pi@<pi-ip>:~
+pip index versions openwakeword
+```
+Download the source
+```bash
 cd ~
+wget https://github.com/dscripka/openWakeWord/archive/refs/tags/v0.6.0.zip -O openWakeWord-0.6.0.zip
 unzip openWakeWord-0.6.0.zip
 cd openWakeWord-0.6.0
 ```
-
-**5b. Edit `setup.py` to replace `tflite-runtime` with `ai-edge-litert`:**
-
-Find this line:
-```python
-"tflite-runtime>=2.8.0,<3; platform_system == 'Linux'",
+Open `setup.py`
+```bash
+nano setup.py
 ```
-Replace with:
 ```python
-"ai-edge-litert; platform_system == 'Linux'",
+# Replace:
+'tflite-runtime>=2.8.0,<3; platform_system == "Linux"',
+# with:
+'ai-edge-litert; platform_system == "Linux"',
 ```
 
-**5c. Install:**
-
+Then install
 ```bash
 pip install .
 ```
 
----
-
 ### 6. Patch openwakeword Source Files
-
 The `ai-edge-litert` API differs slightly from `tflite-runtime`. The import used is:
 
 ```python
 from ai_edge_litert.interpreter import Interpreter as tflite
 ```
 
-This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. Three call sites need fixing:
+This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. Three calls need fixing:
 
 ### model.py (~line 165)
-
 ```bash
 nano ~/.venv/lib/python3.13/site-packages/openwakeword/model.py
 ```
-
 ```python
 # Change:
 self.models[mdl_name] = tflite.Interpreter(model_path=mdl_path, num_threads=1)
@@ -155,11 +119,9 @@ self.models[mdl_name] = tflite(model_path=mdl_path, num_threads=1)
 ```
 
 ### utils.py (~lines 113 and 139)
-
 ```bash
 nano ~/.venv/lib/python3.13/site-packages/openwakeword/utils.py
 ```
-
 ```python
 # Change (~line 113):
 self.melspec_model = tflite.Interpreter(model_path=melspec_model_path, num_threads=ncpu)
@@ -172,11 +134,10 @@ self.embedding_model = tflite.Interpreter(model_path=embedding_model_path, num_t
 self.embedding_model = tflite(model_path=embedding_model_path, num_threads=ncpu)
 ```
 
----
-
 ### 7. Download Pretrained Models
 
 ```bash
+cd ~
 python -c "from openwakeword.utils import download_models; download_models()"
 ```
 
@@ -194,11 +155,12 @@ Required base models:
 
 ### 8. Fix Audio Buffer Overflow
 
-On resource-constrained hardware, PyAudio may throw `OSError: [Errno -9981] Input overflowed`.
-
-In your detection script, change:
+On resource-constrained hardware, PyAudio may throw `OSError: [Errno -9981] Input overflowed`. To prevent this:
+```bash
+nano ~/openWakeWord-0.6.0/examples/detect_from_microphone.py
+```
 ```python
-# From:
+# Change(~line 74):
 audio = np.frombuffer(mic_stream.read(CHUNK), dtype=np.int16)
 
 # To:
@@ -211,44 +173,12 @@ CHUNK = 4096
 mic_stream = p.open(..., frames_per_buffer=CHUNK * 4)
 ```
 
----
-
 ### 9. Run Detection Script
-
 ```bash
-python voiceAssist/detect_from_microphone.py \
+python openWakeWord-0.6.0/examples/detect_from_microphone.py
     --model_path /home/pi/voiceAssist/models/chochko.tflite \
     --inference_framework tflite
 ```
-
-> ⚠️ Always use the full absolute path — Python does not expand `~` in argument strings.
-
----
-
-## Custom Non-English Wake Word Training
-
-A custom Colab notebook was developed for training wake words in non-English languages (including Cyrillic script). The trained model produces a standard `.tflite` file fully compatible with openwakeword.
-
-Key considerations:
-- Use phonetically distinctive words for best accuracy
-- Record training samples in the same acoustic environment as deployment
-- The ReSpeaker 2-Mic provides sufficient quality for wake word detection
-- `.tflite` models from custom training work identically to pretrained English models
-
-## Troubleshooting Reference
-
-| Error | Fix |
-|-------|-----|
-| `Failed building wheel for pyaudio` | `sudo apt-get install portaudio19-dev python3-dev` |
-| `No matching distribution for speexdsp-ns` | Build from source: github.com/TeaPoly/speexdsp-ns-python |
-| `No matching distribution for tflite-runtime` | `pip install ai-edge-litert` + patch `setup.py` |
-| `AudioFeatures got unexpected kwarg 'inference_framework'` | Upgrade from 0.4.0 to 0.6.0 |
-| `type object 'Interpreter' has no attribute 'Interpreter'` | Remove `.Interpreter` from `tflite` calls in `model.py` and `utils.py` |
-| `Could not find pretrained model` | Run `download_models()` or use full absolute path (no `~`) |
-| `OSError: [Errno -9981] Input overflowed` | Add `exception_on_overflow=False` to `mic_stream.read()` |
-| `GPU device discovery failed` (onnxruntime warning) | Harmless — no GPU on Pi, CPU inference is used |
-| `ALSA lib: Unknown PCM cards.pcm.front` | Harmless ALSA warning — audio still works |
+For detection test use the standard wake words 'Hey Mycroft', 'Hey Jarvis', and 'Hey Rhasspy'. 
 
 ---
-
-*Successfully running custom Bulgarian wake word detection on Raspberry Pi* 🎉

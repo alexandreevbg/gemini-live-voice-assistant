@@ -22,7 +22,7 @@ More technical details:
 - **Linux Kernel:** 6.18.29+rpt-rpi-v8 · aarch64
 - **Python version:** 3.13.5
 - **openwakeword:** 0.6.0 (built from source)
-- **TFLite backend:** ai-edge-litert (replaces tflite-runtime)
+- **TFLite backend:** ai-edge-litert 2.1.5 (replaces tflite-runtime)
 - **Inference:** TFLite + ONNX Runtime 1.24.4
 
 ## Repository structure
