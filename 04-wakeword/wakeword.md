@@ -51,21 +51,7 @@ sudo apt-get install -y portaudio19-dev python3-dev libasound2-dev \
 
 ---
 
-### 2. Python Virtual Environment
-
-Raspberry Pi OS Trixie enforces PEP 668, so a virtual environment is required:
-
-```bash
-python3 -m venv --system-site-packages ~/.venv
-source ~/.venv/bin/activate
-```
-
-> ⚠️ Always activate the venv before installing or running anything:  
-> `source ~/.venv/bin/activate`
-
----
-
-### 3. Install PyAudio
+### 2. Install PyAudio
 
 ```bash
 pip install pyaudio
@@ -75,11 +61,11 @@ pip install pyaudio
 
 ---
 
-### 4. Install speexdsp-ns (from source)
+### 3. Install speexdsp-ns (from source)
 
 No prebuilt wheel exists for Python 3.13 + aarch64. Build from source:
 
-**4a. Download the zip on a PC and transfer to the Pi:**
+**3a. Download the zip on a PC and transfer to the Pi:**
 
 ```bash
 # Download on your PC:
@@ -89,7 +75,7 @@ No prebuilt wheel exists for Python 3.13 + aarch64. Build from source:
 scp speexdsp-ns-python-main.zip pi@<pi-ip>:~
 ```
 
-**4b. Build and install on the Pi:**
+**3b. Build and install on the Pi:**
 
 ```bash
 cd ~
@@ -100,7 +86,7 @@ pip install .
 
 ---
 
-### 5. Install ai-edge-litert
+### 4. Install ai-edge-litert
 
 `tflite-runtime` has no Python 3.13 wheels. Use Google's official replacement:
 
@@ -112,9 +98,9 @@ pip install ai-edge-litert
 
 ---
 
-### 6. Install openwakeword 0.6.0 (from source)
+### 5. Install openwakeword 0.6.0 (from source)
 
-**6a. Download and transfer to the Pi:**
+**5a. Download and transfer to the Pi:**
 
 ```bash
 # Download on your PC:
@@ -126,7 +112,7 @@ unzip openWakeWord-0.6.0.zip
 cd openWakeWord-0.6.0
 ```
 
-**6b. Edit `setup.py` to replace `tflite-runtime` with `ai-edge-litert`:**
+**5b. Edit `setup.py` to replace `tflite-runtime` with `ai-edge-litert`:**
 
 Find this line:
 ```python
@@ -137,7 +123,7 @@ Replace with:
 "ai-edge-litert; platform_system == 'Linux'",
 ```
 
-**6c. Install:**
+**5c. Install:**
 
 ```bash
 pip install .
@@ -145,7 +131,7 @@ pip install .
 
 ---
 
-### 7. Patch openwakeword Source Files
+### 6. Patch openwakeword Source Files
 
 The `ai-edge-litert` API differs slightly from `tflite-runtime`. The import used is:
 
@@ -188,7 +174,7 @@ self.embedding_model = tflite(model_path=embedding_model_path, num_threads=ncpu)
 
 ---
 
-### 8. Download Pretrained Models
+### 7. Download Pretrained Models
 
 ```bash
 python -c "from openwakeword.utils import download_models; download_models()"
@@ -206,7 +192,7 @@ Required base models:
 
 ---
 
-### 9. Fix Audio Buffer Overflow
+### 8. Fix Audio Buffer Overflow
 
 On resource-constrained hardware, PyAudio may throw `OSError: [Errno -9981] Input overflowed`.
 
@@ -227,7 +213,7 @@ mic_stream = p.open(..., frames_per_buffer=CHUNK * 4)
 
 ---
 
-### 10. Run Detection Script
+### 9. Run Detection Script
 
 ```bash
 python voiceAssist/detect_from_microphone.py \
