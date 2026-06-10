@@ -180,8 +180,42 @@ And check the default audio devices again
 ```bash
 wpctl status # Look for aec_input and aec_output IDs
 ```
+## 6. Force PCM slider to max volume
+When start, PipeWire often set the PCM volume to 35% (80, 80). The simplest way to make it 100% is to run a single shoot service. For this:
+1. Create new service file in the local systemd user directory:
+```bash
+mkdir -p ~/.config/systemd/user/
+nano ~/.config/systemd/user/fix-pcm.service
+```  
 
-## 6. Test AEC
+2. Paste the following configuration:
+```text
+[Unit]
+Description=Force ReSpeaker PCM Volume to 100% after PipeWire starts
+After=pipewire.service wireplumber.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/sleep 3
+ExecStart=/usr/bin/amixer -c 0 sset PCM 100%
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target
+```
+
+3. Save it and enable the service
+```bash
+systemctl --user daemon-reload
+systemctl --user enable fix-pcm.service
+```
+
+4. reboot
+```bash
+sudo reboot
+```
+
+## 7. Test AEC
 Get music clip
 ```bash
 wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/music_48k.wav

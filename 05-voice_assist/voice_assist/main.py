@@ -70,6 +70,13 @@ class VoiceAssistant:
         self._end_after_turn = False
         self._volume         = 100
         self._VOLUME_STEP    = 15
+        
+        from wakeword import create_detector
+        self.wakeword = create_detector(
+            backend    = config.WAKEWORD_BACKEND,
+            model_path = config.WAKEWORD_MODEL,
+            threshold  = config.WAKEWORD_THRESH
+        )
 
     def setup(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop

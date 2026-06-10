@@ -181,5 +181,23 @@ python openWakeWord-0.6.0/examples/detect_from_microphone.py
 ```
 For detection test use the standard wake words 'Hey Mycroft', 'Hey Jarvis', and 'Hey Rhasspy'. 
 
+## Install MicroWakeWord
+A guide for adding [microWakeWord](https://github.com/kahrendt/microWakeWord) as a
+selectable wake-word backend alongside openWakeWord, switchable with a single flag.
+
+### 1. System Dependencies
+Install required system libraries before any Python packages:
+```bash
+pip install -U pymicro-wakeword     # 2.3.0 or newer recommended
+```
+
+Version 2.3.0+ exposes `process_streaming_prob()`, which returns the raw
+probability for logging/tuning. Versions 2.0–2.2 only expose
+`process_streaming()` (returns a bool decision). The detector below works with
+either; 2.3.0 just adds the live score logging.
+
+`pymicro-wakeword` bundles its own `tensorflowlite_c` shared library and drives
+it via ctypes, so **`ai_edge_litert`/`tflite_runtime` are not needed** for this path.
+
 ---
 [Return to Main README](../README.md)

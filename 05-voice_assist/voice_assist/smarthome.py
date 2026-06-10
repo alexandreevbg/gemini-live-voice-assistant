@@ -107,9 +107,6 @@ class SmartHome:
         except Exception as e:
             log.error(f'HA load entities error: {e}')
 
-        except Exception as e:
-            log.error(f'HA load entities error: {e}')
-
     async def _load_aliases_ws(self, entity_ids: list) -> dict:
         """Load aliases for each entity via WebSocket get command."""
         aliases  = {}

@@ -17,9 +17,16 @@ RATE_APP         = 16000
 CHUNK_APP        = 1280
 CHUNK_HW         = int(CHUNK_APP * RATE_HW / RATE_APP)  # 3840
 
-# ── Wake Word ─────────────────────────────────────────────
-WAKEWORD_MODEL   = '/home/chochko/voiceAssist/models/chochko.tflite'
-WAKEWORD_THRESH  = 0.5
+# ── Wake Word ──────────────────────────────────────────────────────────
+USE_MICROWAKEWORD = False   # True = microWakeWord, False = openWakeWord
+
+WAKEWORD_MODEL_OWW   = '/home/chochko/voice_assist/models/chochko.tflite'
+WAKEWORD_MODEL_MWW   = '/home/chochko/voice_assist/models/chochko_micro.tflite'
+WAKEWORD_THRESH      = 0.5
+
+# Resolved automatically — don't change these
+WAKEWORD_BACKEND = 'microwakeword' if USE_MICROWAKEWORD else 'openwakeword'
+WAKEWORD_MODEL   = WAKEWORD_MODEL_MWW if USE_MICROWAKEWORD else WAKEWORD_MODEL_OWW
 
 # ── Location ──────────────────────────────────────────────
 _location = loc_module.get_current()
@@ -34,6 +41,7 @@ GEMINI_SYSTEM    = (
     'Ти си приятелски домашен асистент. '
     'Името ти е Чочко. '
     'Давай кратки отговори подходящи за гласов интерфейс. '
+    'Когато ти говорят на чужд език, отговаряй на същия език. '
     'Когато разказваш приказка, добави 2-3 детайлa, специфични за текущото населеното място. '
     'Когато те питат колко е часът, отговаряй с местното време за текущото местоположение. '
     'Можеш да управляваш музиката в Spotify. '
@@ -41,8 +49,8 @@ GEMINI_SYSTEM    = (
 )
 
 # ── Spotify ───────────────────────────────────────────────
-SPOTIFY_CLIENT_ID     = os.environ['SPOTIFY_CLIENT_ID']
-SPOTIFY_CLIENT_SECRET = os.environ['SPOTIFY_CLIENT_SECRET']
+SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET')
 SPOTIFY_REDIRECT_URI  = 'http://127.0.0.1:8888/callback'
 
 # ── Dialog ────────────────────────────────────────────────

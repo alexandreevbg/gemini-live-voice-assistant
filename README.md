@@ -10,11 +10,11 @@ Project highlights:
 - **Hardware:** Raspberry Pi + ReSpeaker 2-Mic v2.0
 - **Platform:** Raspberry Pi OS Trixie (Debian 13) · Python 3.13 · aarch64
 - **Advanced Audio Processing:** Utilizes PipeWire with Acoustic Echo Cancellation (AEC) for voice capture
-- **On-Device Wake Word Detection:** Efficient and private wake word recognition based on OpenWakeWord
+- **On-Device Wake Word Detection:** Efficient and private wake word recognition based on OpenWakeWord or MicroWakeWord
 - **Gemini Live Integration:** Seamless conversational AI powered by Google's **Gemini Live API**
 
 Optional features:
-- **Custom Wake Word:** Training a custom wake word, provided Bulgarian **"Чочко"** as an example
+- **Custom Wake Word:** Training a custom model for OpenWakeWord, provided Bulgarian **"Чочко"** as an example
 - **Home Assistant:** Optional integration for smart device control
 - **Spotify:** for music streaming from Spotify or Home Assistant Media Player
 
@@ -26,13 +26,13 @@ More technical details:
 - **Inference:** TFLite + ONNX Runtime 1.24.4
 
 ## Repository structure
-Besides a specific instruction file in each folder, you can find the related resources if any:
+Besides a specific instruction file in each folder, you can find the related resources in:
 - **01-platform** - Makefile to compile and setup ReSpeaker drivers and ReSpeaker schematic diagram
 - **02-tools** - Python scripts for headless WiFi captive portal
 - **03-environment** - template for definition of environment variables and music clip for test AEC
-- **04-wakeword** - Colab notebook for training non-English wake words 
+- **04-wakeword** - Colab notebook for training non-English wake words for OpenWakeWord model
 - **05-voice_assist** - the voice assistant package in Python
-- **06-enclosure** - 3D printing files (STL), exploded component views, and hardware wiring diagrams
+- **06-enclosure** - 3D printing files (STL), exploded component view, and hardware wiring diagrams
 
 ## Implementation Roadmap
 
