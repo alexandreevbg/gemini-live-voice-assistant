@@ -10,7 +10,7 @@ Project highlights:
 - **Hardware:** Raspberry Pi + ReSpeaker 2-Mic v2.0
 - **Platform:** Raspberry Pi OS Trixie (Debian 13) · Python 3.13 · aarch64
 - **Advanced Audio Processing:** Utilizes PipeWire with Acoustic Echo Cancellation (AEC) for voice capture
-- **On-Device Wake Word Detection:** Efficient and private wake word recognition based on OpenWakeWord or MicroWakeWord
+- **On-Device Wake Word Detection:** Efficient and private wake word recognition based on OpenWakeWord or MicroWakeWord models
 - **Gemini Live Integration:** Seamless conversational AI powered by Google's **Gemini Live API**
 
 Optional features:

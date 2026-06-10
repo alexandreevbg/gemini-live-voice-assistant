@@ -115,11 +115,13 @@ sudo setcap 'cap_net_bind_service=+ep' $(readlink -f ~/.venv/bin/python)
 ```
 
 ## 5. Test Individual Components
-Run all tests from `~/voiceAssist/` with venv active.
+Run all tests from with .venv active.
+```bash
+cd ~/voice_assist
+```
 
 1. Test SPI / LEDs
 ```bash
-source ~/.venv/bin/activate
 python3 -c "
 import spidev, time
 spi = spidev.SpiDev()
@@ -142,7 +144,6 @@ print('LEDs OK')
 
 2. Test Microphone
 ```bash
-source ~/.venv/bin/activate
 python3 -c "
 import sounddevice as sd, numpy as np
 print('Devices:')
@@ -164,7 +165,6 @@ print(f'Received {len(chunks)} chunks - Mic OK')
 
 3. Test Playback / Speaker
 ```bash
-source ~/.venv/bin/activate
 python3 -c "
 import sounddevice as sd, numpy as np
 
@@ -180,7 +180,6 @@ print('Speaker OK')
 
 4. Test Button
 ```bash
-source ~/.venv/bin/activate
 python3 -c "
 from gpiozero import Button
 import time
@@ -194,8 +193,6 @@ print('Button pressed - GPIO OK')
 5. Test Wake Word Detection
 
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 -c "
 import sys, time, numpy as np
 from capture import MicCapture
@@ -238,8 +235,6 @@ if not detected[0]:
 
 6. Test Gemini Connection
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 -c "
 import asyncio, os, sys
 sys.path.insert(0, '.')
@@ -274,8 +269,6 @@ asyncio.run(test())
 
 7. Test Spotify
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 -c "
 import sys, os, time
 sys.path.insert(0, '.')
@@ -304,8 +297,6 @@ if ok:
 
 8. Test Weather
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 -c "
 import sys
 sys.path.insert(0, '.')
@@ -321,8 +312,6 @@ print('Formatted:', weather.format_for_gemini(w))
 
 9. Test Home Assistant
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 ha_test.py
 ```
 
@@ -334,8 +323,6 @@ The interactive test script:
 
 10. Test Location
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python3 -c "
 import sys
 sys.path.insert(0, '.')
@@ -348,15 +335,11 @@ print('Prompt string:', location.format_for_prompt(loc))
 
 ## 6. Run Voice Assistant From Command Line
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python main.py
 ```
 
 Run with log saved to file
 ```bash
-source ~/.venv/bin/activate
-cd ~/voiceAssist
 python main.py 2>&1 | tee ~/voiceAssist/session.log
 ```
 

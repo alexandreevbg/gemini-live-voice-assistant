@@ -1,39 +1,5 @@
 # WakeWord: Obtain Wake Word Model, Install openWakeWord
 
-## Obtain Wake Word Model
-There are three options: use a pre-trained model, train your own in English or in non-English language.
-
-### 1. Use a pre-trained model
-A large collection of community-trained models (mostly in English) is available in the following [repository](https://github.com/fwartner/home-assistant-wakewords-collection/blob/main/en).
-
-### 2. Train a custom wake word in English
-To train a custom wake word model in English, use the following Google Colab [notebook](https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing).
-
-### 3. Train a custom wake word in other languages
-To train a custom wake word model in other languages supported by Piper, use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **04-wakeword/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
-- **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
-- **generate_samples_onnx.py** - the modified script working with ONNX models
-- **generate_samples.py** - the final script to be downloaded by the modified notebook
-
-Once you find a piper voice model for your language, use the appropriate Python script as follows:
-- make a local copy of the appropriate script on your computer
-- rename it to "generate_samples.py"
-- replace the model name in the script with the name of your desired model
-- store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
-- run the notebook stored in the same directory
-
-The current notebook and generate_samples.py in the **02-wakeword** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
-- click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
-- find the line starting with "!wget "https://raw.githubusercontent.com/..."
-- replace the link on this line with the link to your URL containing your generate_samples.py script
-- run the cell to create and listen to a test example
-- run all cells and download the generated tflite model
-- save a copy of the modified notebook and rename it as you want
-
-To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
-
-In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word in non-English into the model filename.
-
 ## Install openWakeWord
 
 ### 1. System Dependencies
@@ -199,5 +165,48 @@ either; 2.3.0 just adds the live score logging.
 `pymicro-wakeword` bundles its own `tensorflowlite_c` shared library and drives
 it via ctypes, so **`ai_edge_litert`/`tflite_runtime` are not needed** for this path.
 
+### 2. Run Detection Script
+Test the installed library with one of the builtin wakewords: alexa, hey_jarvis, hey_mycroft, or ok_nabu. To test with wake word Alexa, run the following command and say "Alexa":
+```bash
+arecord -D pipewire -r 16000 -c 1 -f S16_LE -t raw - | python3 gemini-live-voice-assistant/04-training/microWW/test_mww.py --builtin alexa
+```
+## Obtain Open Wake Word Model
+There are three options: use a pre-trained model, train your own in English or in non-English language.
+
+### 1. Use a pre-trained model
+A large collection of community-trained models (mostly in English) is available in the following [repository](https://github.com/fwartner/home-assistant-wakewords-collection/blob/main/en).
+
+### 2. Train a custom wake word in English
+To train a custom wake word model in English, use the following Google Colab [notebook](https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing).
+
+### 3. Train a custom wake word in other languages
+To train a custom wake word model in other languages supported by Piper, use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **04-wakeword/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
+- **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
+- **generate_samples_onnx.py** - the modified script working with ONNX models
+- **generate_samples.py** - the final script to be downloaded by the modified notebook
+
+Once you find a piper voice model for your language, use the appropriate Python script as follows:
+- make a local copy of the appropriate script on your computer
+- rename it to "generate_samples.py"
+- replace the model name in the script with the name of your desired model
+- store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
+- run the notebook stored in the same directory
+
+The current notebook and generate_samples.py in the **02-wakeword** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
+- click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
+- find the line starting with "!wget "https://raw.githubusercontent.com/..."
+- replace the link on this line with the link to your URL containing your generate_samples.py script
+- run the cell to create and listen to a test example
+- run all cells and download the generated tflite model
+- save a copy of the modified notebook and rename it as you want
+
+To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
+
+In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word in non-English into the model filename.
+
+## Obtain Micro Wake Word Model
+Currently, except the built-in, a collection of pre-trained models is available on https://github.com/TaterTotterson/microWakeWords. 
+
+A notebook for training custom models is available on https://github.com/OHF-Voice/micro-wake-word/blob/november-update/notebooks/basic_training_notebook.ipynb.
 ---
 [Return to Main README](../README.md)
