@@ -167,12 +167,10 @@ print(f'Received {len(chunks)} chunks - Mic OK')
 ```bash
 python3 -c "
 import sounddevice as sd, numpy as np
-
-# Play 1 second 440Hz tone
 t    = np.linspace(0, 1, 48000, False)
 tone = (np.sin(440 * 2 * np.pi * t) * 0.3 * 32767).astype(np.int16)
 stereo = np.column_stack([tone, tone])
-sd.play(stereo, samplerate=48000, dtype='int16')
+sd.play(stereo, samplerate=48000)
 sd.wait()
 print('Speaker OK')
 "
