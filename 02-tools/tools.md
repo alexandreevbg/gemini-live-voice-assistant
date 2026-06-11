@@ -1,9 +1,12 @@
-# Tools: Python Environment, WiFi Captive Portal, Backup, Rapotify
+# Tools: Python Environment, WiFi Captive Portal, Backup, Raspotify
 
 This part guides through the setup of the Python virtual environment and installation of three optional, but recommended tools:
 1. System backup tool - a fast and efficient backup tool for IoT project
 2. Headless Wi-Fi captive portal - if you plan to travel with your device
 3. Raspotify - Spotify Connect client for Raspberry Pi - if you plan to play music on your device  
+
+You can install the optional tools later.
+
 ---
 
 ## 1. Python Virtual Environment
@@ -44,12 +47,25 @@ Mount an external drive to store the image and run backup
 ---
 
 ### 2. Headless Wi-Fi captive portal
-The ReSpeaker 2-mic HAT has on-board button connected to GPIO17. Holding the button during system boot until the blue light starts blinking, activates the Wi-Fi captive portal having:
-- SSID: "Chochko-WiFi-Setup" 
-- password: "chochko123"
-- the portal is available on the standard address 192.168.4.1
+#### Reading the lights
+| Light | What it means | What to do |
+|-------|---------------|------------|
+| 💙 **Blue flash** (once) | Starting up | Nothing — just booting |
+| ❤️ **Red blinking** | Can't reach the internet | Wait, or press the button to set up Wi-Fi |
+| 💙 **Blue pulsing** | Setup mode is on | Connect your phone (see below) |
+| ⚫ **Off** | Connected and working | Nothing — you're good |
 
-You can open the portal with your phone or computer, select a new SSID from the list, enter the password, and press Connect. The Respeaker will try to connect and if successful then reboot. If after the next reboot the new SSID is unavailable, then the device will attempt to connect to the any previous SSID.
+After power-on, the device flashes blue once, then tries to connect to a previously used Wi-Fi network. If it gets online, the light stays off and the device is ready. 
+If it can't connect, the device blinks red 10 times, then tries again. This cycle repeats until a connection is established — or until you press the button to open the captive portal.
+- **SSID**: Chochko-WiFi-Setup
+- **Password**: chochko123
+- **Portal address**: 192.168.4.1
+
+Connect with your phone or computer, select a network from the list, enter the password, and press Connect. The device tries to connect and then reboots (whether or not it succeeded — if it failed, you'll see red blinking again and can retry).
+
+If you don't finish within 300 seconds, the portal closes and the device returns to red blinking. Press the button to reopen the portal, or disconnect the power to reboot.
+
+You can also open the captive portal at any time by pressing and holding the button during boot until the light starts pulsing blue.
 
 1. Install the LED driver library into the shared environment:
    ```bash
@@ -96,7 +112,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    sudo systemctl enable wifi-config.service
    sudo reboot
    ```
-The device should blink once with blue light when it's ready. You can change the captive portal parameters as SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
+You can change the captive portal parameters as SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
 
 ---
 

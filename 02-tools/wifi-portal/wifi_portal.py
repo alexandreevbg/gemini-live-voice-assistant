@@ -369,17 +369,40 @@ def run_portal(led: LedController) -> bool:
 
     return False
 
-# --- Red blink: wait for button ---
-def red_blink_until_button(led: LedController):
-    log("Red blink — waiting for button")
+# --- Red blink: retry connection or launch portal on button ---
+RED_BLINK_COUNT = 10
+
+def _wait_button(duration, step=0.05) -> bool:
+    """Sleep up to `duration` seconds, returning True early if button pressed."""
+    elapsed = 0.0
+    while elapsed < duration:
+        if is_button_pressed():
+            return True
+        time.sleep(step)
+        elapsed += step
+    return False
+
+def red_blink_cycle(led: LedController, blinks=RED_BLINK_COUNT) -> bool:
+    """
+    Blink red `blinks` times while watching for a button press.
+    Returns True  → button pressed → caller should run the portal.
+    Returns False → finished blinking → caller should retry the connection.
+    """
+    log(f"Red blink x{blinks} — press button for setup portal")
     wait_for_button_release()
-    led.start_pulse(RED)
-    while not is_button_pressed():
-        time.sleep(0.1)
-    led.stop_pulse()
-    led_off()
-    log("Button pressed")
-    time.sleep(0.2)
+    for i in range(blinks):
+        led_all(RED)
+        if _wait_button(0.5):
+            led_off()
+            log(f"Button pressed (blink {i+1}/{blinks})")
+            time.sleep(0.2)
+            return True
+        led_off()
+        if _wait_button(0.5):
+            log(f"Button pressed (blink {i+1}/{blinks})")
+            time.sleep(0.2)
+            return True
+    return False
 
 # --- Main ---
 def main():
@@ -392,24 +415,39 @@ def main():
     # Button held at startup → portal immediately
     if is_button_pressed():
         log("Button held at startup → portal")
-        while True:
-            if run_portal(led):
-                return
-            red_blink_until_button(led)
+        if run_portal(led):
+            return
+        # Portal cancelled → fall through to red-blink loop below
 
     # WiFi OK → exit
-    if check_internet():
+    elif check_internet():
         log("WiFi OK — exiting")
         atexit.unregister(stop_hotspot)
         return
 
-    # No WiFi → red blink → button → portal loop
-    log("No WiFi")
+    else:
+        log("No WiFi")
+
+    # Red-blink loop: blink 10×, then retry the connection.
+    # A button press during the blinking launches the setup portal.
     while True:
-        red_blink_until_button(led)
-        if run_portal(led):
-            return
-        # Portal cancelled → back to red blink
+        if red_blink_cycle(led):
+            # Button pressed → run portal
+            if run_portal(led):
+                return
+            # Portal cancelled → back to red blink
+        else:
+            # Finished 10 blinks → retry connection (router may be back)
+            log("Retrying connection...")
+            last = get_last_wifi()
+            if last:
+                run_cmd(["nmcli", "connection", "up", last], check=False)
+                time.sleep(3)
+            if check_internet():
+                log("WiFi reconnected — exiting")
+                atexit.unregister(stop_hotspot)
+                return
+            log("Still no WiFi")
 
 if __name__ == '__main__':
     try:
