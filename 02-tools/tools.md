@@ -1,4 +1,4 @@
-# Create Python environment, install opyional tools
+# Tools: Python Environment, WiFi Captive Portal, Backup, Rapotify
 
 This part guides through the setup of the Python virtual environment and installation of three optional, but recommended tools:
 1. System backup tool - a fast and efficient backup tool for IoT project
