@@ -21,7 +21,7 @@ CHUNK_HW         = int(CHUNK_APP * RATE_HW / RATE_APP)  # 3840
 USE_MICROWAKEWORD = False   # True = microWakeWord, False = openWakeWord
 
 WAKEWORD_MODEL_OWW   = '/home/chochko/voice_assist/models/chochko.tflite'
-WAKEWORD_MODEL_MWW   = '/home/chochko/voice_assist/models/chochko_micro.tflite'
+WAKEWORD_MODEL_MWW   = '/home/chochko/voice_assist/models/alexa.tflite'
 WAKEWORD_THRESH      = 0.5
 
 # Resolved automatically — don't change these

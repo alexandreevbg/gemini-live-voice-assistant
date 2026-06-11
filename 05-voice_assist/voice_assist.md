@@ -1,4 +1,4 @@
-# Voice Assistant — Installation & Testing Guide
+# Voice Assistant: Installation & Testing Guide
 
 This guide covers installation of the voice assistant and integrations with Home Assistant and Spotify.
 
@@ -44,26 +44,34 @@ sudo apt install -y python3-dev portaudio19-dev alsa-utils
 pip install sounddevice websockets requests spotipy
 ```
 
-3. Move Source Files
+3. Move Source Files to Home Directory
 ```bash
 mv ~/gemini-live-voice-assistant/05-voice_assist/voice_assist ~/voice_assist
 ```
 
-## 4. Setup Spotify Connect device (optional)
-1. Stop the raspotify system service
+## 3. Setup Spotify Connect device (optional)
+
+Playing music needs two things, and both require **Spotify Premium** (Connect / librespot does not work on free accounts):
+
+- **A playback device** named `Chochko` on your network — provided by librespot / raspotify.
+- **Web API authorization** so the assistant can see that device and control it (play / pause / volume / transfer).
+
+If you already installed raspotify and can control it from the Spotify phone app, the device half is essentially working. The steps below move it into your user's PipeWire session (so audio routes to the ReSpeaker) and then authorize the Web API.
+
+### 3.1 Run raspotify in your user session
+The packaged service runs as its own system user and can't reach your PipeWire audio session — when it tries to open ALSA directly it crash-loops with `snd_pcm_open ... Host is down (112)`. So disable and **mask** it (masking matters; it auto-restarts otherwise), then run the same `librespot` binary as a **user** service that shares your PipeWire session.
 ```bash
-sudo systemctl disable raspotify
-sudo systemctl stop raspotify
+sudo systemctl disable --now raspotify
 sudo systemctl mask raspotify
+systemctl is-active raspotify        # expect: inactive
 ```
 
-2. Get Spotify credentials
+Confirm the librespot binary path (installed by the raspotify package — masking the service does not remove the binary):
 ```bash
-curl -sSL https://xevion.github.io/spotify-quickauth/run.sh | sh
-# Creates: ~/.cache/raspotify/credentials.json
+which librespot                      # expect /usr/bin/librespot
 ```
 
-3. Setup and re-run user service
+Create the user service, replacing `YOUR_USERNAME` with your login (e.g. `chochko`). If `which librespot` returned a different path, fix the `ExecStart` line to match:
 ```bash
 mkdir -p ~/.config/systemd/user
 cat > ~/.config/systemd/user/raspotify.service << 'EOF'
@@ -91,33 +99,36 @@ WantedBy=default.target
 EOF
 
 systemctl --user daemon-reload
-systemctl --user enable raspotify
-systemctl --user start raspotify
+systemctl --user enable --now raspotify
 sleep 8
 systemctl --user status raspotify | grep Active
 ```
 
-4. Authorize Spotify Web API
-Create Spotify app at https://developer.spotify.com/dashboard
-- Set redirect URI: `http://127.0.0.1:8888/callback`
-- Copy Client ID and Secret to `~/.env` if not yet
+Then **log the device in once**: open Spotify on your phone, tap the devices icon, select **Chochko**, and play something. librespot authenticates over zeroconf (the same way your phone already discovers it) and caches the session in `--cache`, so it reconnects automatically on every boot afterwards.
 
-Run one-time authorization:
-```bash
-source ~/.venv/bin/activate
-python ~/voiceAssist/spotify_auth.py
-# Open URL in browser → authorize → paste redirect URL back
-```
+> No credential script is needed. An earlier version of this guide piped a remote `…/run.sh | sh` to pre-seed `credentials.json`. That is both unnecessary (zeroconf + `--cache` already persists the login) and risky — it runs unreviewed remote code as your user. Skip it.
 
-5. Allow Python to bind port 80:
-```bash
-sudo setcap 'cap_net_bind_service=+ep' $(readlink -f ~/.venv/bin/python)
-```
+### 3.2 Authorize the Web API (one-time)
+Do this **after** 3.1 is running — the verification at the end lists Spotify devices, which only shows **Chochko** if the user service is up.
 
-## 5. Test Individual Components
-Run all tests from with .venv active.
+The app and credentials are already set up in Section 1 (redirect URI `http://127.0.0.1:8888/callback`, Client ID / Secret in `~/.env`). Mint the token cache that the assistant reads:
 ```bash
 cd ~/voice_assist
+python spotify_auth.py
+```
+1. Open the printed URL in a browser on your **phone or laptop** (the Pi has no browser).
+2. Log in and approve. The browser then tries to load `http://127.0.0.1:8888/callback?code=…` and **fails to load — that is expected** (nothing listens on the Pi; only the `?code=…` in the address bar matters).
+3. Copy the **entire** address-bar URL and paste it back at the prompt.
+
+`spotify_auth.py` exchanges the code, writes `~/.spotify_cache`, then verifies that your account shows `premium` and that **Chochko** appears in your device list. After this the assistant uses the cached token automatically and refreshes it as needed.
+
+> The account you authorize here must be the **same Premium account** raspotify is logged into — Connect only lists devices on your own account. Run this as the **same user** that runs the assistant, so the cache lands in the right home directory.
+
+## 4. Test Individual Components
+These checks verify each piece of hardware and each integration in isolation, so that if something fails later you already know which part is healthy. Run them on the Pi (most need the real hardware), one at a time, with the `.venv` active. Each test prints an `... OK` line on success — if you see a Python traceback or a `FAILED` message instead, fix that component before moving on.
+```bash
+cd ~/voice_assist
+source .venv/bin/activate
 ```
 
 1. Test SPI / LEDs
@@ -141,6 +152,7 @@ spi.close()
 print('LEDs OK')
 "
 ```
+> **Watch the 3 LEDs.** They should light **blue → magenta → red** (1 second each), then switch **off**, and print `LEDs OK`. If the colours look wrong (e.g. red/blue swapped) the byte order is off; if nothing lights, check the HAT seating and that SPI is enabled.
 
 2. Test Microphone
 ```bash
@@ -162,6 +174,7 @@ with sd.InputStream(samplerate=48000, channels=2, dtype='int32',
 print(f'Received {len(chunks)} chunks - Mic OK')
 "
 ```
+> Prints the device list, then captures audio for ~2 seconds. You should see a non-zero chunk count and `Mic OK`. Confirm the ReSpeaker 2-Mic array appears in the device list; if `Received 0 chunks` or it errors, the mic isn't being picked up — recheck the PipeWire/ALSA setup and the HAT.
 
 3. Test Playback / Speaker
 ```bash
@@ -175,6 +188,7 @@ sd.wait()
 print('Speaker OK')
 "
 ```
+> **Listen.** You should hear a clear 1-second 440 Hz tone (musical note A) from the speaker, then `Speaker OK`. No sound usually means the wrong output device or a muted/low volume — check the speaker connection and the PipeWire default sink.
 
 4. Test Button
 ```bash
@@ -187,48 +201,39 @@ btn.wait_for_press(timeout=10)
 print('Button pressed - GPIO OK')
 "
 ```
+> When you see `Press button (GPIO17)...`, **physically press the button** on the HAT within 10 seconds. Success prints `Button pressed - GPIO OK`. If it exits after 10 s with no message, the press wasn't registered — check the wiring/pin (GPIO17).
 
 5. Test Wake Word Detection
+To test wake word detection, run the following script:
 ```bash
 python3 -c "
-import sys, time, numpy as np
+import logging, time
+logging.basicConfig(level=logging.INFO, format='%(name)s: %(message)s')
 from capture import MicCapture
 from wakeword import create_detector
 import config
 
-detector = create_detector(
-    config.WAKEWORD_BACKEND,
-    config.WAKEWORD_MODEL,
-    config.WAKEWORD_THRESH
-)
+det = create_detector(config.WAKEWORD_BACKEND, config.WAKEWORD_MODEL, config.WAKEWORD_THRESH)
+mic = MicCapture(); mic.add_consumer(det.process); mic.start()
 
-detected = [False]
-
-def on_detect():
-    print('WAKE WORD DETECTED!')
-    detected[0] = True
-
-import asyncio
-loop = asyncio.new_event_loop()
-detector.set_loop(loop)
-detector.set_on_detect(on_detect)
-
-mic = MicCapture()
-mic.add_consumer(detector.process)
-mic.start()
-
-print(f'Listening for wake word ({config.WAKEWORD_BACKEND})...')
-print('Say your wake word now (10 seconds)')
-
+print('Say the wake word (10s)...')
 start = time.time()
-while not detected[0] and time.time() - start < 10:
-    time.sleep(0.1)
-
+while time.time() - start < 10:
+    time.sleep(0.05)
+    if det._detected:              # set synchronously inside process()
+        print('>>> WAKE WORD DETECTED <<<')
+        break
 mic.stop()
-if not detected[0]:
-    print('Wake word not detected in 10s')
+print('Detected' if det._detected else 'Not detected')
 "
 ```
+> After `Say your wake word now`, **speak your wake word** clearly within 10 seconds. Success prints `WAKE WORD DETECTED!`. If it reports `Wake word not detected in 10s`, try speaking louder/closer, or lower `WAKEWORD_THRESH` in `config.py` (a lower threshold is more sensitive but risks false triggers).
+
+> You can also test microWakeWord detection. For this in config.py find and change:
+```text
+ USE_MICROWAKEWORD = True  
+```
+Then run the same test script.
 
 6. Test Gemini Connection
 ```bash
@@ -263,6 +268,7 @@ async def test():
 asyncio.run(test())
 "
 ```
+> Needs working internet and a valid `GEMINI_API_KEY` in your environment. Success prints the response keys and `Gemini Live connection OK`. A `Gemini connection FAILED:` message points at the cause — usually a bad/missing API key, no internet, or a wrong `GEMINI_MODEL` name in `config.py`.
 
 7. Test Spotify
 ```bash
@@ -285,12 +291,13 @@ if ok:
     print('Now playing:', current)
     print()
     print('Testing volume...')
-    sp.set_volume(50)
+    sp.set_volume(75)
     time.sleep(1)
     sp.set_volume(100)
     print('Spotify OK')
 "
 ```
+> Requires Sections 3.1 and 3.2 done (raspotify running and the Web API authorized). It lists your Spotify devices — **Chochko** should be among them — shows what's playing, and steps the volume 50 → 100 (if something is playing you'll hear it change). Success prints `Spotify OK`. `Connected: False` means the token cache is missing or the account isn't Premium — rerun `spotify_auth.py`.
 
 8. Test Weather
 ```bash
@@ -306,10 +313,11 @@ print('Weather:', w)
 print('Formatted:', weather.format_for_gemini(w))
 "
 ```
+> Resolves your location, then fetches the current weather for it. You should see a plausible town/country and a weather summary — no traceback. If the location looks wrong, check the Location test (#10); if the weather call fails, verify internet and any weather API settings.
 
 9. Test Home Assistant
 ```bash
-python3 ha_test.py
+python test_ha.py
 ```
 
 The interactive test script:
@@ -317,6 +325,8 @@ The interactive test script:
 2. Tests entity search by name/alias
 3. Shows device status
 4. Interactive control prompt
+
+> This one is **interactive** — it waits for your input. Confirm your Home Assistant entities and aliases appear in the list, then use the control prompt to toggle a device (e.g. a light) and check it actually responds. An empty entity list or connection error means the HA URL/token in your config is wrong or HA is unreachable. Press `Ctrl+C` to exit when done.
 
 10. Test Location
 ```bash
@@ -329,8 +339,9 @@ print('Location:', loc)
 print('Prompt string:', location.format_for_prompt(loc))
 "
 ```
+> Prints your detected location and the formatted string the assistant feeds to the model. Check the town/country are correct — this drives both the weather lookup (#8) and any location-aware answers. If it's wrong or empty, verify internet access and the location source (e.g. IP-based geolocation can be off; set an override in config if needed).
 
-## 6. Run Voice Assistant From Command Line
+## 5. Run Voice Assistant From Command Line
 ```bash
 python main.py
 ```
@@ -352,7 +363,7 @@ grep "score" ~/voiceAssist/session.log
 grep "Wake word" ~/voiceAssist/session.log
 ```
 
-## 7. Systemd Autostart Services
+## 6. Systemd Autostart Services
 1. Create voice assistant service
 ```bash
 cat > ~/.config/systemd/user/voiceassist.service << 'EOF'
@@ -392,10 +403,8 @@ loginctl show-user YOUR_USERNAME | grep Linger
 systemctl --user start voiceassist
 sleep 12
 
-systemctl --user status \
-    pipewire wireplumber pipewire-pulse \
-    raspotify voiceassist \
-    | grep -E "Active|Main PID"
+systemctl --user status pipewire wireplumber pipewire-pulse \
+    raspotify voiceassist | grep -E "Active|Main PID"
 ```
 
 All 5 should show `active (running)`.
@@ -455,8 +464,19 @@ systemctl --user restart pipewire wireplumber
 ### Spotify token expired
 ```bash
 rm -f ~/.spotify_cache
-python ~/voiceAssist/spotify_auth.py
+python ~/voice_assist/spotify_auth.py
 ```
+
+### Raspotify visible on phone but won't play (`snd_pcm_open ... Host is down`)
+The **system** raspotify package is running and trying to open ALSA directly, which fails under PipeWire. Mask it and use the user service from 4.1 instead:
+```bash
+systemctl is-active raspotify          # system service (should be inactive/masked)
+sudo systemctl disable --now raspotify
+sudo systemctl mask raspotify
+systemctl --user restart raspotify
+journalctl --user -u raspotify -n 20 --no-pager
+```
+The user service uses `--backend pulseaudio`, so it reaches the output through `pipewire-pulse` inside your session. If the user unit is missing (`Unit raspotify.service does not exist`), create it per 4.1 first.
 
 ### Home Assistant not connecting
 ```bash

@@ -102,9 +102,7 @@ sed -i "s|frames_per_buffer=CHUNK|frames_per_buffer=CHUNK * 4|" ~/openWakeWord-0
 
 ### 9. Run Detection Script
 ```bash
-python openWakeWord-0.6.0/examples/detect_from_microphone.py
-    --model_path /home/pi/voiceAssist/models/chochko.tflite \
-    --inference_framework tflite
+python openWakeWord-0.6.0/examples/detect_from_microphone.py --inference_framework tflite
 ```
 For detection test use any of the builtin wake words 'Alexa", 'Hey Mycroft', 'Hey Jarvis', and 'Hey Rhasspy'. 
 
