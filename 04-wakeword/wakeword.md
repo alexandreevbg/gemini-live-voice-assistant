@@ -16,6 +16,7 @@ sudo apt-get install -y portaudio19-dev python3-dev libasound2-dev \
 
 ### 2. Install PyAudio
 ```bash
+source ~/.venv/bin/activate
 pip install pyaudio
 ```
 
@@ -48,60 +49,32 @@ wget https://github.com/dscripka/openWakeWord/archive/refs/tags/v0.6.0.zip -O op
 unzip openWakeWord-0.6.0.zip
 cd openWakeWord-0.6.0
 ```
-Open `setup.py`
+Patch `setup.py`
 ```bash
-nano setup.py
+sed -i -E "s|^([[:space:]]*)'tflite-runtime[^']*'(.*)$|\1'ai-edge-litert; platform_system == \"Linux\"'\2|" setup.py
 ```
-```python
-# Replace:
-'tflite-runtime>=2.8.0,<3; platform_system == "Linux"',
-# with:
-'ai-edge-litert; platform_system == "Linux"',
-```
-
 Then install
 ```bash
 pip install .
 ```
 
-### 6. Patch openwakeword Source Files
-The `ai-edge-litert` API differs slightly from `tflite-runtime`. The import used is:
-
-```python
-from ai_edge_litert.interpreter import Interpreter as tflite
-```
-
-This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. Three calls need fixing:
-
-### model.py (~line 165)
-```bash
-nano ~/.venv/lib/python3.13/site-packages/openwakeword/model.py
-```
+### 6. Patch openWakeWord Source Files
+The `ai-edge-litert` API differs slightly from `tflite-runtime`. In files model.py and utils.py:
 ```python
 # Change:
-self.models[mdl_name] = tflite.Interpreter(model_path=mdl_path, num_threads=1)
-# To:
-self.models[mdl_name] = tflite(model_path=mdl_path, num_threads=1)
+import tflite_runtime.interpreter as tflite
+# with
+from ai_edge_litert.interpreter import Interpreter as tflite
 ```
-
-### utils.py (~lines 113 and 139)
+This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. The import itself and three related calls need fixing. You can use nano or the following script:
 ```bash
-nano ~/.venv/lib/python3.13/site-packages/openwakeword/utils.py
-```
-```python
-# Change (~line 113):
-self.melspec_model = tflite.Interpreter(model_path=melspec_model_path, num_threads=ncpu)
-# To:
-self.melspec_model = tflite(model_path=melspec_model_path, num_threads=ncpu)
-
-# Change (~line 139):
-self.embedding_model = tflite.Interpreter(model_path=embedding_model_path, num_threads=ncpu)
-# To:
-self.embedding_model = tflite(model_path=embedding_model_path, num_threads=ncpu)
+cd ~/.venv/lib/python3.13/site-packages/openwakeword
+sed -i "s|import tflite_runtime.interpreter as tflite|from ai_edge_litert.interpreter import Interpreter as tflite|" model.py utils.py
+sed -i "s|tflite-runtime|ai_edge_litert|" model.py utils.py
+sed -i "s|tflite.Interpreter|tflite|" model.py utils.py
 ```
 
 ### 7. Download Pretrained Models
-
 ```bash
 cd ~
 python -c "from openwakeword.utils import download_models; download_models()"
@@ -120,23 +93,11 @@ Required base models:
 ---
 
 ### 8. Fix Audio Buffer Overflow
-
-On resource-constrained hardware, PyAudio may throw `OSError: [Errno -9981] Input overflowed`. To prevent this:
+To prevent PyAudio throwing `OSError: [Errno -9981] Input overflowed`, make changes in the test script by nano or by the following script:
 ```bash
-nano ~/openWakeWord-0.6.0/examples/detect_from_microphone.py
-```
-```python
-# Change(~line 74):
-audio = np.frombuffer(mic_stream.read(CHUNK), dtype=np.int16)
-
-# To:
-audio = np.frombuffer(mic_stream.read(CHUNK, exception_on_overflow=False), dtype=np.int16)
-```
-
-Optionally increase the buffer size:
-```python
-CHUNK = 4096
-mic_stream = p.open(..., frames_per_buffer=CHUNK * 4)
+sed -i "s|mic_stream.read(CHUNK)|mic_stream.read(CHUNK, exception_on_overflow=False)|" ~/openWakeWord-0.6.0/examples/detect_from_microphone.py
+sed -i "s|CHUNK = args.chunk_size|CHUNK = 4096|" ~/openWakeWord-0.6.0/examples/detect_from_microphone.py
+sed -i "s|frames_per_buffer=CHUNK|frames_per_buffer=CHUNK * 4|" ~/openWakeWord-0.6.0/examples/detect_from_microphone.py
 ```
 
 ### 9. Run Detection Script
@@ -168,7 +129,7 @@ it via ctypes, so **`ai_edge_litert`/`tflite_runtime` are not needed** for this 
 ### 2. Run Detection Script
 Test the installed library with one of the builtin wakewords: alexa, hey_jarvis, hey_mycroft, or ok_nabu. To test with wake word Alexa, run the following command and say "Alexa":
 ```bash
-arecord -D pipewire -r 16000 -c 1 -f S16_LE -t raw - | python3 gemini-live-voice-assistant/04-training/microWW/test_mww.py --builtin alexa
+arecord -D pipewire -r 16000 -c 1 -f S16_LE -t raw - | python3 gemini-live-voice-assistant/04-wakeword/microWW/test_mww.py --builtin alexa
 ```
 ## Obtain Open Wake Word Model
 There are three options: use a pre-trained model, train your own in English or in non-English language.

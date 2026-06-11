@@ -216,21 +216,16 @@ sudo reboot
 ```
 
 ## 7. Test AEC
-Get music clip
-```bash
-wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/03-environment/music_48k.wav
-```
-
 Play music and record speech at the same time for 10 sec
 ```bash
-pw-play music_48k.wav &
+pw-play gemini-live-voice-assistant/03-environment/music_48k.wav &
 pw-record test.wav &
 sleep 10
 killall pw-play pw-record
 sleep 2
 pw-play test.wav
 ```
-Run alsamixer in terminal 2 and find the max volume when the above test is working well.
+Run als0amixer in terminal 2, select card 0 "seeed2mic..." and find the max volume of Line DAC slider, while when the above test is working well.
 
 ---
 [Return to Main README](../README.md)
