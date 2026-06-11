@@ -189,7 +189,6 @@ print('Button pressed - GPIO OK')
 ```
 
 5. Test Wake Word Detection
-
 ```bash
 python3 -c "
 import sys, time, numpy as np

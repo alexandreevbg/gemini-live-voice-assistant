@@ -1,4 +1,4 @@
-# WakeWord: Obtain Wake Word Model, Install openWakeWord
+# WakeWord: Install and test openWakeWord and microWakeWord. Obtain Wake Word Model. 
 
 ## Install openWakeWord
 
@@ -145,7 +145,7 @@ python openWakeWord-0.6.0/examples/detect_from_microphone.py
     --model_path /home/pi/voiceAssist/models/chochko.tflite \
     --inference_framework tflite
 ```
-For detection test use the standard wake words 'Hey Mycroft', 'Hey Jarvis', and 'Hey Rhasspy'. 
+For detection test use any of the builtin wake words 'Alexa", 'Hey Mycroft', 'Hey Jarvis', and 'Hey Rhasspy'. 
 
 ## Install MicroWakeWord
 A guide for adding [microWakeWord](https://github.com/kahrendt/microWakeWord) as a
@@ -207,6 +207,7 @@ In addition to the `target_word` field, the notebook includes a `target_model_na
 ## Obtain Micro Wake Word Model
 Currently, except the built-in, a collection of pre-trained models is available on https://github.com/TaterTotterson/microWakeWords. 
 
-A notebook for training custom models is available on https://github.com/OHF-Voice/micro-wake-word/blob/november-update/notebooks/basic_training_notebook.ipynb.
+A notebook for training new custom models is available on https://github.com/OHF-Voice/micro-wake-word/blob/november-update/notebooks/basic_training_notebook.ipynb.
+
 ---
 [Return to Main README](../README.md)

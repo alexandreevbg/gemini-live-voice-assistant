@@ -48,8 +48,8 @@ Create a common Python environment, and install the system backup tool, headless
 ### 3. [Environment & Audio Stack](./03-environment/environment.md)
 Install, setup, and test PipeWire with AEC (Acoustic Echo Cancellation).
 
-### 4. [Wake Word Training](./04-wakeword/wakeword.md)
-Obtain a wake word model, using Colab notebook to train custom models for English and non-English wake words, install openWakeWord and test it.
+### 4. [Wake Word & Training](./04-wakeword/wakeword.md)
+Install and test openWakeWord and microWakeWord libraries. Obtain a keyword model, or create one by using Colab notebook for English and non-English wake words, .
 
 ### 5. [Voice Assistant Core](./05-voice_assist/voice_assist.md)
 Install, setup and test the main Python package, Gemini API integration, and optional Home Assistant and Spotify integrations.
