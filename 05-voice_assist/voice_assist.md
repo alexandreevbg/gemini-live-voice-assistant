@@ -491,11 +491,3 @@ curl -H "Authorization: Bearer $HA_TOKEN" \
 alsamixer -c 0
 # Adjust PGA level (target: speech clearly audible)
 ```
-
-### Environment variables not loaded in service
-```bash
-# Verify .env has no 'export' prefix
-grep "^export" ~/.env   # should return nothing
-# Fix if needed:
-sed -i 's/^export //' ~/.env
-```

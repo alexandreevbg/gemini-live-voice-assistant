@@ -57,6 +57,13 @@ Install, setup and test the main Python package, Gemini API integration, and opt
 ### 6. [Enclosure & Assembly](./06-enclosure/enclosure.md)
 An enclosure for the voice assistant in the form of 3D printing files (STL), exploded component view, and a wiring diagram.
 
+### 7. Clean Leftovers
+Delete all downloads you don't need anymore:
+```bash
+rm -rf ~/openWakeWord-0.6.0/ ~/openWakeWord-0.6.0.zip
+rm -rf ~/speexdsp-ns-python-main/ ~/speexdsp-ns-python-main.zip
+```
+
 ---
 ---
 ---
