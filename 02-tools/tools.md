@@ -1,4 +1,5 @@
-## Optional Tools
+# Create Python environment, install opyional tools
+
 This part guides through the setup of the Python virtual environment and installation of three optional, but recommended tools:
 1. System backup tool - a fast and efficient backup tool for IoT project
 2. Headless Wi-Fi captive portal - if you plan to travel with your device
@@ -43,7 +44,7 @@ Mount an external drive to store the image and run backup
 ---
 
 ### 2. Headless Wi-Fi captive portal
-The ReSpeaker 2-mic HAT has on-board button connected to GPIO17. Holding the button during system boot activates the Wi-Fi captive portal having:
+The ReSpeaker 2-mic HAT has on-board button connected to GPIO17. Holding the button during system boot until the blue light starts blinking, activates the Wi-Fi captive portal having:
 - SSID: "Chochko-WiFi-Setup" 
 - password: "chochko123"
 - the portal is available on the standard address 192.168.4.1
@@ -95,7 +96,7 @@ You can open the portal with your phone or computer, select a new SSID from the 
    sudo systemctl enable wifi-config.service
    sudo reboot
    ```
-The device should blink once with blue light when it's ready. Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
+The device should blink once with blue light when it's ready. You can change the captive portal parameters as SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
 
 ---
 

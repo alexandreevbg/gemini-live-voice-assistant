@@ -29,9 +29,9 @@ More technical details:
 Besides a specific instruction file in each folder, you can find the related resources in:
 - **01-platform** - Makefile to compile and setup ReSpeaker drivers and ReSpeaker schematic diagram
 - **02-tools** - Python scripts for headless WiFi captive portal
-- **03-environment** - template for definition of environment variables and music clip for test AEC
+- **03-environment** - Template for definition of environment variables and music clip for test AEC
 - **04-wakeword** - Colab notebook for training non-English wake words for OpenWakeWord model
-- **05-voice_assist** - the voice assistant package in Python
+- **05-voice_assist** - The voice assistant package in Python
 - **06-enclosure** - 3D printing files (STL), exploded component view, and hardware wiring diagrams
 
 ## Implementation Roadmap
