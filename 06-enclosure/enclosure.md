@@ -1,479 +1,396 @@
-# Gemini Live Voice Assistant
+# Raspberry Pi Smart Speaker — Build Documentation
 
-> **⚠️ WORK IN PROGRESS**
-> This repository is currently under construction. The code and models provided here are in active development.
+A spherical, full-duplex smart speaker built around a Raspberry Pi Zero 2W and a ReSpeaker 2-Mic HAT, with mechanical and acoustic design optimized for clean AEC (echo cancellation) at usable playback volumes.
 
-## Project Overview
-This project contains instructions, tools and source code for creating a Multilingual Voice Assistant and includes:
-- Direct integration with **Gemini Live API**
-- On-device wake word detection using **OpenWakeWord** algorithms
-- Optional integration with **Home Assistant**
-- Optional integration with **Spotify**
+## Design Goals
 
-The assistant is designed to run on a **Raspberry Pi Zero 2W** accompanied by a **Seeed Studio ReSpeaker 2-mic HAT**.
+1. **Clean AEC at high volume** — the speaker should remain in its linear operating range across the useful volume range, so PipeWire's WebRTC AEC3 can maintain effective echo cancellation.
+2. **Mic isolation from speaker vibration** — the microphones must hear room sound, not the enclosure's structural reaction to the driver.
+3. **Adequate thermal dissipation** for the Pi SoC.
+4. **Compact, aesthetically clean form** — spherical, with a clean visible parting line.
 
-OpenWakeWord algorithms are extracted from: https://github.com/rhasspy/wyoming-satellite
+## Final Acoustic Architecture
 
-## Repository Structure
-- **`training/`**: Contains a colab notebook and a patch for training OpenWakeWord models in non-English languages
-- **`wifi_config/`**: Contains a script for a captive portal to configure the WiFi connection
-- **`voice_assist/`**: Contains the main Python scripts for running the Voice Assistant
-- **`patches/`**: System patches
----
-# Instructions
-The instructions below are arranged in the following sections:
-- **Obtaining a wake word model** - get a pre-trained model or create your own
-- **Prepare the system** - install required packages and apply patches
-- **Install and run the assistant** - install the Python code and run the assistant
-- **Create 3D-printed enclosure** - 3D printed models and interconnections
+| Decision | Choice | Rationale |
+|---|---|---|
+| Enclosure type | **Sealed** (no bass-reflex port) | Empirically sounded best in testing; gentler impulse response is friendlier to AEC; eliminates port chuffing and tuning complexity. |
+| Speaker mounting | **Inner sealed sub-enclosure**, soft-mounted to outer shell | Isolates back-wave, controls cone excursion (the source of non-linearity that breaks AEC at high volume). |
+| Disk role | Mass + mic/Pi platform + heatsink | Steel disk floats on soft TPU pads above the speaker sub-enclosure; Pi and mics hard-mounted to disk. |
+| Mic mounting | Hard mount to disk via TPU acoustic tunnels | Disk is acoustically quiet (isolated from speaker), so hard mounting is fine and gives best capsule stability. |
+| Pi mounting | Hard mount to disk (with thermal pad) | Disk doubles as a heatsink; no compliant layer between Pi SoC and disk. |
 
-## 🛠️ Obtaining a wake word model
-There are two options: use a pre-trained model or train your own.
+## Mechanical Build
 
-### 1. Use a pre-trained model
-A large collection of community-trained models (mostly in English) is available in the following repository:
-https://github.com/fwartner/home-assistant-wakewords-collection
+### Outer Shell (PLA)
 
-### 2. Train a custom wake word in English
-To train a custom wake word model in English, use the following Google Colab notebook:
-https://colab.research.google.com/drive/1q1oe2zOyZp7UsB3jJiQ1IFn8z5YfjwEb?usp=sharing
+The shell has two halves: a **bottom bowl** containing the speaker subsystem, and a **top cover** (upper hemisphere) over the Pi/mic subsystem. The two halves meet at the steel disk's plane.
 
-### 3. Train a custom wake word in other languages
-To train a custom wake word model in other languages supported by Piper, use the same notebook with a minor modification and a patch that replaces the English voice with another one. In the **training/** directory you will find the modified notebook, as well as three Python scripts for generating the samples:
-- **generate_samples_pt.py** - the original script included in the piper-sample-generator package, working with PyTorch models
-- **generate_samples_onnx.py** - the modified script working with ONNX models
-- **generate_samples.py** - the final script to be downloaded by the modified notebook
+**External dia: 82.8 mm; internal dia: 76.8 mm; wall thickness: 3 mm.**
 
-Once you find a piper voice model for your language, use the appropriate Python script as follows:
-- make a local copy of the appropriate script on your computer
-- rename it to "generate_samples.py"
-- replace the model name in the script with the name of your desired model
-- store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
-- run the notebook stored in the same directory
+| Part | Wall thickness | Perimeters | Infill | Top/Bottom layers |
+|---|---|---|---|---|
+| Bottom bowl | 3.0 mm | 4 | 30–40 % gyroid | 5–6 |
+| Top cover (upper hemisphere) | 2.4 mm | 4 | 20–25 % gyroid | 4–5 |
+| Sealed speaker sub-enclosure | 2.4–3.0 mm | 4 | 30–40 % gyroid | 5 |
 
-The current notebook and generate_samples.py in the **training/** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
-- click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
-- find the line starting with "!wget "https://raw.githubusercontent.com/..."
-- replace the link on this line with the link to your URL containing your generate_samples.py script
-- run the cell to create and listen to a test example
-- run all cells and download the generated tflite model
-- save a copy of the modified notebook and rename it as you want
+**PLA print parameters (apply to all PLA parts):**
 
-To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
+- Layer height: **0.2 mm**
+- Print temperature: at the **higher end of filament's range** (~215 °C for typical PLA) — improves layer adhesion and reduces ringing.
+- Print speed: **≤ 60 mm/s for perimeters**, ≤ 80 mm/s for infill.
+- Cooling fan: **30–50 %**, not 100 % — preserves layer welding.
+- Infill pattern: **gyroid** (isotropic, self-bracing). Avoid rectilinear/grid.
+- Infill/perimeter overlap: **25–30 %** (default 15 % can buzz).
 
-In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word into the model filename.
+**Heat note:** PLA softens around 60 °C and creeps under load above ~45 °C. If the device runs continuously and the Pi warms the interior, consider **PETG** instead (acoustically similar, heat-tolerant to ~75 °C, prints with the same wall/infill spec).
 
----
-## ⚙️ Prepare the system
-Preparations include the following installations:
-- Raspberry Pi OS Lite (64-bit)
-- Drivers for ReSpeaker 2-mic
-- Shared virtual environment for Python apps
-- Wi-Fi captive portal for Wi-Fi configuration
+### Inner Sealed Speaker Sub-Enclosure
 
-If you intend to improve or expand the capabilities of this device beyond the scope of this guide, then I would recommend also to install a backup solution.
+Houses the 40 mm 3W driver. Fully airtight — this is what loads the driver against an air spring (controls excursion at high volume → keeps the echo path linear → AEC stays effective).
 
-## 1. Install Raspberry Pi OS (64-bit) Lite
-Follow this procedure to install the latest Raspberry Pi OS:
-- Install and run **Raspberry Pi Imager** on your Windows, macOS, or Linux computer
-- For the device, select **Raspberry Pi Zero 2W**
-- For the OS, select **Raspberry Pi OS (other)** and then **Raspberry Pi OS (Legacy, 64-bit) Lite**.
-  > [IMPORTANT]: As of mid-2024, the standard "Raspberry Pi OS Lite" points to an unstable testing version (Debian Trixie). The "Legacy" version points to the required **stable** version (Debian Bookworm), which is necessary for driver compatibility.
-- For the storage, select your SD-Card connected to USB port
-- Decide the hostname of the device (I used "chocko")
-- Configure Localization and credentials parameters
-- Enter the initial connection parameters for your Wi-Fi
-- Enable the SSH connection and write OS on SD-Card
-- Connect the SD-Card and ReSpeaker to the Raspberry Pi Zero 2W and power it on
+- Walls 2.4–3.0 mm, 4 perimeters, 30–40 % gyroid infill.
+- **0.8 mm TPU gasket between driver flange and enclosure** for an airtight, vibration-decoupled mount.
+- **Internal damping:** small amount of polyester fill (~30 % of internal volume) plus optional butyl rubber sheet patches bonded to interior walls. Damps standing waves and absorbs back-wave energy.
+- **Seal all wire pass-throughs** with silicone or hot glue.
+- The enclosure is then **rigidly part of the bottom bowl** (or bonded to it with T-7000) — it doesn't need to be isolated from the bowl, because the *disk* will be isolated from the bowl/sub-enclosure system.
 
-At the time of writing, the latest stable Raspberry Pi OS (Legacy, 64-bit) Lite is based on **Debian 12 (Bookworm)**, running Kernel **6.12.47+rpt-rpi-v8** with preinstalled **Python 3.11.2**.
+### Steel Divider Disk (4 mm Stainless Steel)
 
-## 2. Install Drivers for ReSpeaker 2-mic HAT
-**First**, to simplify the Voice Assistant's audio configuration, disable the Raspberry Pi's onboard HDMI audio, making the ReSpeaker the sole audio device. Also, since Bluetooth is not used, disable it as well. For this edit the system config.txt file:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Change the following lines:
-   ```bash
-   dtparam=audio=off
-   dtoverlay=vc4-kms-v3d,noaudio
-   ```
-   And add the following line to the end of the file:
-   ```bash
-   dtoverlay=disable-bt             # disable bluetooth if not used
-   ```
+The disk separates the audio chamber from the Pi/mic chamber. It rides on 4 TPU pads above the sealed speaker sub-enclosure, supports the Pi and HAT (hard-mounted, for heatsinking), supports the mic tunnels, and the top hemisphere clips onto it via magnets.
 
-**Second**, identify the version of your Respeaker 2-mic HAT: https://wiki.seeedstudio.com/how-to-distinguish-respeaker_2-mics_pi_hat-hardware-revisions/
+- Diameter sized to clear the inner sphere wall with ~1 mm radial gap (compliant T-7000 bond fills this; the steel does not rigidly contact the outer shell).
+- Bonded to bottom shell using **T-7000** (flexible adhesive that retains compliance after curing).
 
-For **ReSpeaker 2-mic HAT V2.0** there is an original instruction provided by Seeed Studio, and you can follow it if you can make some minor changes on the fly: https://wiki.seeedstudio.com/respeaker_2_mics_pi_hat_raspberry_v2/#2-setup-the-driver-on-raspberry-pi <br>
-**or**<br>
-follow the compact version of the same, aligned to the latest Raspberry Pi OS:
-1. Build the driver for audio codec TLV320AIC3104:
-   ```bash
-   ## Install kernel
-   sudo apt update
-   sudo apt install raspberrypi-kernel-headers -y
-   sudo apt install flex bison libssl-dev bc build-essential libncurses5-dev libncursesw5-dev git device-tree-compiler -y
-   git clone --depth=1 --branch rpi-6.12.y https://github.com/raspberrypi/linux.git
+### Soft-Mount System (Critical)
 
-   ## Copy code and a Makefile
-   mkdir ~/tlv320aic3x_i2c_driver
-   cd ~/tlv320aic3x_i2c_driver
-   cp ~/linux/sound/soc/codecs/tlv320aic3x.c ~/tlv320aic3x_i2c_driver/
-   cp ~/linux/sound/soc/codecs/tlv320aic3x.h ~/tlv320aic3x_i2c_driver/
-   cp ~/linux/sound/soc/codecs/tlv320aic3x-i2c.c ~/tlv320aic3x_i2c_driver/
-   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/Makefile
+The disk floats on **4 printed TPU pads** between the top of the speaker sub-enclosure and the underside of the disk.
 
-   ## Build the driver 
-   make
-   sudo make install
-   sudo modprobe snd-soc-tlv320aic3x-i2c
+**Pad specification:**
 
-   ## Check logs
-   lsmod | grep tlv320
-   dmesg | grep tlv320
+- **Material:** TPU 85A (or softer if available).
+- **Quantity:** 4, placed near the disk rim, widely spaced (maximum rocking resistance).
+- **Height:** **3 mm** (2 mm protruding above pocket).
+- **Diameter:** ~8 mm round.
+- **Infill:** **8–10 % gyroid**, 2 perimeters max, 1–2 top/bottom layers (don't cap with thick solid — the cap dominates stiffness).
+- **Bond:** **T-7000** bead on both faces. Cure overnight under full assembly load before any further work.
 
-   ## Cleanup source files
-   rm -rf ~/linux
-   ```
-2. Install the overlay
-   ```bash
-   curl https://raw.githubusercontent.com/Seeed-Studio/seeed-linux-dtoverlays/refs/heads/master/overlays/rpi/respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dts
-   dtc -I dts respeaker-2mic-v2_0-overlay.dts -o respeaker-2mic-v2_0-overlay.dtbo
-   sudo dtoverlay respeaker-2mic-v2_0-overlay.dtbo
-   sudo cp respeaker-2mic-v2_0-overlay.dtbo /boot/firmware/overlays
-   ```
+**Pocket geometry in the speaker sub-enclosure top face:**
 
-3. Add overlay configuration to config.txt:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Add the following line to the end of the file:
-   ```bash
-   dtoverlay=respeaker-2mic-v2_0-overlay
-   ```
+- **Pocket depth: 1 mm** (locates pad, doesn't bury it).
+- **Pocket diameter: ~11 mm** (3 mm clearance around pad — *essential* for the pad to bulge laterally when compressed; a tight pocket makes the pad hydraulically rigid).
+- **Pocket floors coplanar within 0.1 mm** — verify after printing with a straight edge.
 
-For **ReSpeaker 2-mic HAT V1.0** (deprecated) follow the instructions below: 
-1. Get the updated driver sources from HinTak: 
-   ```bash
-   cd ~
-   git clone -b v6.14 --single-branch https://github.com/HinTak/seeed-voicecard
-   ```
-2. Patch the file seeed-voicecard.c file
-   ```bash
-   wget https://raw.githubusercontent.com/alexandreevbg/gemini-live-voice-assistant/main/patches/seeed-voicecard.c
-   mv ~/seeed-voicecard/seeed-voicecard.c ~/seeed-voicecard/
-   ```
-3. Build and install the driver
-   ```bash
-   cd ~/seeed-voicecard
-   sudo ./install.sh
-   ```
-4. Add overlay configuration to config.txt:
-   ```bash
-   sudo nano /boot/firmware/config.txt
-   ```
-   Add the following line to the end of the file:
-   ```bash
-   dtoverlay=seeed-2mic-voicecard
-   ```
+**Target acoustic behavior:**
 
-**And finally, for both versions**, reboot the device and test the ReSpeaker with ALSA
-1. Reboot the device
-   ```bash
-   sudo reboot
-   ```
-2. Check if Respeaker is found and is the only device used by aplay and arecord. It's card number should be 0 and the name like "seeed2mic..."
-   ```bash
-   aplay -l
-   arecord -l
-   ```
-3. Set Capture and PCM/Speaker volumes
-   Run `alsamixer` and configure the following important sliders:
-   - **PCM / Master**: Digital playback volume (keep around 80%).
-   - **Speaker / Line**: Volume for the JST connector (white plug).
-   - **Headphone**: Volume for the 3.5mm jack.
-   - **PGA / Capture**: **Microphone Analog Gain**. This is critical. Set to ~50-70%. If too high, audio clips; if too low, it won't hear you.
-   - **AGC**: Automatic Gain Control. Recommended to turn **OFF** for consistent wake word detection.
+- Suspended mass m = disk + Pi + HAT + reflector + top hemisphere + connectors. Weigh this.
+- Resonant frequency f₀ ≈ **60–80 Hz** (well below the speaker's useful output band; isolation improves at 12 dB/octave above ~1.4 × f₀).
+- Verify under load: ~10–20 % static compression of the protruding pad height (0.2–0.4 mm of visible sag). More than ~25 % compression is too soft; no visible compression is too stiff.
 
-   > **Note on Volume & Echo**: The ReSpeaker HAT does not have hardware echo cancellation. If you play music (like Spotify) very loudly, the microphone will pick it up and may not be able to hear your wake word. It is recommended to keep the playback volume at a moderate level for reliable performance.
+### Disk-to-Enclosure Clearance
 
-4. Test the recording:
-   ```bash
-   arecord -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
-   aplay test.wav
-   ```
-## 3. Install a Shared Virtual Environment for Python Apps
-To optimize performance on the Raspberry Pi Zero 2W, use a "hybrid" environment strategy: install heavy libraries (like numpy and gpiozero) globally via `apt` to save installation time and disk space, and then create a shared virtual environment that can access them.
+**Resting gap at the closest point: target ~1.5 mm minimum; visible aesthetic rim gap 2.0–2.4 mm.**
 
-1. Install system dependencies:
-   ```bash
-   sudo apt update
-   sudo apt install build-essential python3-dev python3-pip python3-venv python3-gpiozero python3-spidev python3-numpy -y
-   ```
-2. Create the shared virtual environment:
-   ```bash
-   python3 -m venv --system-site-packages ~/.venv
-   ```
-   This environment (`~/.venv`) will be used by both the Wi-Fi portal and the Voice Assistant.
+The closest-approach point may not be the visible rim — check for any feature protruding upward from the speaker sub-enclosure toward the disk (magnet boss, terminal, screw head). That's where you need the 1.5 mm minimum; the visible rim can be larger.
 
-3. Get software packages for the Voice Assistant:
-   ```bash
-   cd ~
-   git clone --depth=1 https://github.com/alexandreevbg/gemini-live-voice-assistant.git
-   mv gemini-live-voice-assistant/voiceAssist .
-   mv gemini-live-voice-assistant/wifi-config .
-   rm -rf gemini-live-voice-assistant
-   ```
+Measure the gap **after full T-7000 cure and under full load** — it will be smaller than the CAD design due to pad compression.
 
-## 4. Install Wi-Fi Captive Portal for WiFi Configuration
-The Voice Assistant has two buttons connected to GPIO12 and GPIO13 available in the Grove port on ReSpeaker 2-mic. Pressing and holding both buttons during system boot activates the Wi-Fi captive portal having:
-- SSID: "Chochko-WiFi-Setup" 
-- password: "chochko123"
-- the portal is available on the standard address 192.168.4.1
-You can open the portal with your phone or computer, select a new SSID from the list, and enter the password. These settings will be used after an automatic reboot. If the new SSID is unavailable, the Voice Assistant will attempt to connect to the previous SSID after the next reboot.
+### Microphone Mounting
 
-1. Install the LED driver library into the shared environment:
-   ```bash
-   ~/.venv/bin/pip install --upgrade pip setuptools
-   ~/.venv/bin/pip install apa102-pi
-   ```
-2. Enable SPI interface in the Raspberry Pi configuration:
-   ```bash
-   sudo raspi-config
-   ```
-   Select "Interfacing Options" -> "SPI" -> "Yes".
-3. Test the Wi-Fi configuration manually
-   ```bash
-   sudo ~/.venv/bin/python ~/wifi-config/wifi_portal.py
-   ```
-   When run, the device should blink once with blue light
-4. Create a one-shot service for the portal
-   ```bash
-   sudo nano /etc/systemd/system/wifi-config.service
-   ```
-   Add the following content to the file. This service runs as `root` after the network comes online, executing the portal script from the correct directory and using the Python virtual environment.
-   > **Note**: Replace `chochko` with your actual username if it's different.
-   ```ini
-   [Unit]
-   Description=Wi-Fi Configuration Portal
-   Wants=network-online.target
-   After=network-online.target
+The two MEMS mics on the ReSpeaker 2-Mic HAT are angled **40° back of vertical**, pointing up-and-back toward the user.
 
-   [Service]
-   Type=oneshot
-   User=root
-   WorkingDirectory=/home/chochko/wifi-config
-   ExecStart=/home/chochko/.venv/bin/python /home/chochko/wifi-config/wifi_portal.py
+**TPU acoustic tunnels:**
 
-   [Install]
-   WantedBy=multi-user.target
-   ```
-   Then, enable the service to run on boot:
-   ```bash
-   sudo systemctl enable wifi-config.service
-   sudo reboot
-   ```
-The device should blink once with blue light when it's ready. Of course, you can change the SSID name/password and/or the portal address in the file `wifi-config/wifi_portal.py`.   
-   
-## 5. Install a Backup Solution (optional)
-For a backup solution, use **RonR-RPi-image-utils**, which quickly and efficiently creates a complete backup of a Raspberry Pi in the form of an image file.
+- **Material:** TPU 85A.
+- **Length:** 6–7 mm.
+- **Wall thickness:** 1.4–1.6 mm (leave as-is; thicker walls add mass and stiffness, hurting decoupling).
+- **Inside diameter:** keep at 3–4 mm or larger to avoid viscous high-frequency losses.
+- **Glued to the top hemisphere shell**, touching the mic capsules below.
+- **0.6 mm TPU layer between tunnel and top hemisphere mounting point** — creates an impedance mismatch that reflects structure-borne vibration.
 
-1. Install NFS and the backup application
-   ```bash
-   sudo apt update
-   sudo apt install nfs-common git -y
-   git clone https://github.com/seamusdemora/RonR-RPi-image-utils
-   sudo install --mode=755 ./RonR-RPi-image-utils/image-* /usr/local/sbin
-   ```
-2. Mount an external drive to store the image and run backup
-   ```bash
-   sudo mount -t nfs -o proto=tcp,port=2049 <NAS IP address>/<target directory> /mnt
-   sudo image-backup -o -v
-   ```
-   After running the command, enter the name of the target image to /mnt/\<image name\>.img, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
-   Then, you can flash the image by Raspberry Pi Imager from the resulting or compressed image. 
+**ReSpeaker HAT mounting to disk:**
 
-## 🎙️ Install and run Voice Assistant
-Since the voice assistant is based on communication with Gemini Live API, you should obtain a GEMINI_API_KEY.
-1. Go to [Google AI Studio](https://aistudio.google.com/) and log in with your Google account.
-2. Click on **Get API key** and create a key for a new project.
-3. Copy the key; you will need to export it as an environment variable before running the assistant.
+- **2 mm TPU feet between PCB and disk** at each mounting hole.
+- **Nylon screws** (not metal) through the PCB, or metal screws with TPU washers under the heads and between PCB and standoff.
+- Any metal-to-metal screw path is a vibration bridge. Eliminate it.
 
-Follow with installations below:
+**Pi mounting to disk (for heatsinking):**
 
-1. Install the required global Python libraries
-   ```bash
-   sudo apt update
-   sudo apt install -y python3-pip python3-dev
-   sudo apt install -y libasound2-dev portaudio19-dev libportaudio2 libportaudiocpp0 libopenblas-dev
-   ```
+- **Hard mount with thermal pad or paste** between SoC and disk. **No TPU between Pi SoC and disk** — TPU is a thermal insulator and would defeat the heatsink function.
+- The Pi has no moving parts and does not vibrate; hard mounting is correct here because the *disk itself* is isolated from the speaker's vibration via the soft mount below it.
+- Monitor SoC temperature with `vcgencmd measure_temp` under sustained load to confirm thermal margin.
 
-2. Install the math, Gemini API, and Spotify libraries
-   ```bash
-   ~/.venv/bin/pip install --upgrade pip setuptools wheel
-   ~/.venv/bin/pip install "numpy<2" tflite-runtime
-   ~/.venv/bin/pip install pyaudio spotipy
-   ~/.venv/bin/pip cache purge
-   ~/.venv/bin/pip install -q -U google-genai
-   ```
+### Top Hemisphere
 
-3. Set the API key and execute the main script:
-   ```bash
-   export GEMINI_API_KEY="put_your_api_key_here"
-   "$HOME/.venv/bin/python" -m voiceAssist.main
-   ```
+- Mounted to the steel disk via **magnets** (already designed).
+- **0.6 mm TPU pads between each magnet and the disk** to break the structure-borne path.
+- Has a 50 mm hole for the inner semi-transparent light dome.
+- Light dome is mounted on the PCB structure (not the top hemisphere shell) and uses a 2 mm gap to the hemisphere — this gap is the upper chamber's natural ventilation path.
 
-4. To confugre the voiceassist service, create a file:
-   ```bash
-   mkdir -p ~/.config/systemd/user
-   nano ~/.config/systemd/user/voiceassist.service
-   ```
-   Then copy-paste the following content, but replace `/home/chochko` with your actual home directory path:
-   ```bash
-   [Unit]
-   Description=VoiceAssist Service
-   After=sound.target
-   Requires=sound.target
+### Wire Routing (Critical Bypass Path Control)
 
-   [Service]
-   Type=simple
-   WorkingDirectory=/home/chochko
-   ExecStart=/home/chochko/.venv/bin/python -m voiceAssist.main
-   Environment="PATH=/home/chochko/.venv/bin:/usr/local/bin:/usr/bin"
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Restart=on-failure
+The whole isolation scheme assumes the 4 TPU pads are the **only mechanical path** from the speaker enclosure to the disk. Wires can defeat this.
 
-   [Install]
-   WantedBy=default.target
-   ```
-   Populate your Gemini API Key above, run, and check the service:
-   ```bash
-   sudo loginctl enable-linger chochko
-   sudo usermod -aG gpio chochko
-   systemctl --user enable voiceassist.service
-   systemctl --user daemon-reload
-   systemctl --user start voiceassist.service
-   systemctl --user status voiceassist.service
-   ```
+- Use **thin, flexible wire** (silicone-jacketed AWG 28–30 or finer) for speaker leads crossing the boundary.
+- **Service loop:** leave several mm of slack so the wire can flex without transmitting force.
+- Avoid stiff jackets, sleeving, or strain reliefs that create rigid bridges.
+- Seal all wire pass-throughs in the sealed speaker box with silicone or hot glue — leaks act as accidental ports.
 
-## 🏠 Add an integration with Home Assistant (optional)
-The integration with Home Assistant is already included in the voice assistant source code. The only thing you have to do is to get the unique token and add it to the environment.
-1. Go to Home Assistant dashboard
-2. Click on your username at bottom-left
-3. Click on Security tab
-4. Scroll down to the Long-lived access tokens
-5. Click on Create Token button and name the token
-6. Copy the token and edit the voiceassist service configuration
-   ```bash
-    nano ~/.config/systemd/user/voiceassist.service
-   ```
-7. Add one more Environment line
-   ```bash
-   ...
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
-   ...
-   ```
-8. Save and restart the service:
-   ```bash
-   systemctl --user restart voiceassist.service
-   ```
-Your Home Assistant should be already configured and running. To make your Home Assistant a multi-language one, you should define aliases for your devices.
+## Internal Damping (Optional but Worthwhile)
 
-## 🎧 Add an integration with Spotify (optional)
-To integrate with Spotify, we need to:
-- install **raspotify** - it creates a network player compatible with Spotify and Home Assistant
-- Get **Spotify credentials** and add them to the environment variables
-- create a **Spotify cache** file - it allows the voice assistant to control Spotify
-- setup **ALSA Dmix** mode - it allows playing both: Gemini and Spotify on the same speaker
-1. To install raspotify:
-   ```bash
-   sudo apt update
-   curl -sL https://dtcooper.github.io/raspotify/install.sh | sh
-   sudo systemctl status raspotify
-   ```
+- **Butyl rubber sheet patches** (automotive sound deadener — "Dynamat" type) on the **inside of the bottom bowl walls**. Covers maybe 30–40 % of the inner surface. Converts panel vibration to heat with very high efficiency — far better than thicker plastic walls.
+- **Light polyester fill (~30 %)** inside the sealed speaker sub-enclosure. Damps internal standing waves.
+- **Do NOT** bridge the isolation gap between speaker sub-enclosure and disk with any material — any contact across that gap reinstates a vibration path and defeats the soft mount.
 
-2. To get Spotify credentials:
-- go to [Spotify for Developers](https://developer.spotify.com/dashboard/applications) and log in
-- select Home >> Dashboard and click on Create app button
-- Copy the Client ID and Client Secret and add them to the environment variables in service configuration:
-   ```bash
-   nano ~/.config/systemd/user/voiceassist.service
-   ```
-   ```bash
-   ...
-   Environment=GEMINI_API_KEY="<put_your_Gemini_API_Key_here>"
-   Environment=HA_TOKEN="<your_Home_Assistant_Token_here>"
-   Environment=SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
-   Environment=SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
-   ...
-   ```
+## Software Configuration (PipeWire + AEC)
 
-3. Create a Spotify cache
-   ```bash
-   export SPOTIFY_CLIENT_ID="<your_Spotify_Client_ID_here>"
-   export SPOTIFY_CLIENT_SECRET="<your_Spotify_Client_Secret_here>"
-   ~/.venv/bin/python voiceAssist/setup_spotify.py
-   ```
-- Copy the long URL starting with https://accounts.spotify.com/authorize... from the terminal.
-- Open it in your browser and log in to your Spotify account and click Agree
-- Your browser will redirect you to a page starting with http://127.0.0.1:8888/callback... Ignore any message saying "This site can't be reached" or "Connection refused".
-- Copy the above address (authorization code) and paste it into the terminal after "Enter URL:" and press enter
+### Hardware Stack
 
-4. To setup ALSA dmix and Raspotify sink and edit raspotify config file
-   ```bash
-   sudo nano /etc/asound.conf
-   ```
-   Paste the following content to enable audio mixing (allowing both the assistant and Spotify to play audio simultaneously):
-   ```bash
-   pcm.dmixed {
-       type dmix
-       ipc_key 1024
-       ipc_key_add_uid 0
-       ipc_perm 0666
-       slave {
-           pcm "hw:0,0"
-           period_time 0
-           period_size 1024
-           buffer_size 8192
-           rate 48000
-       }
-       bindings {
-           0 0
-           1 1
-       }
-   }
+- **ReSpeaker 2-Mic HAT** based on TLV320AIC3204 codec.
+- Single I²S clock domain: playback and capture are clock-synchronous (ideal for AEC).
+- Native rate: **48 kHz**.
+- ALSA device: typically appears as `seeed2micvoicec`.
 
-   pcm.dsnooped {
-       type dsnoop
-       ipc_key 1025
-       ipc_key_add_uid 0
-       ipc_perm 0666
-       slave {
-           pcm "hw:0,0"
-           channels 2
-           rate 48000
-       }
-   }
+### AEC Configuration
 
-   pcm.!default {
-       type asym
-       playback.pcm "plug:dmixed"
-       capture.pcm "plug:dsnooped"
-   }
-   ```
-   Then edit the raspotify config:
-   ```bash
-   sudo nano /etc/raspotify/conf
-   ```
-   Uncomment the following two lines and add values to them:
-   ```bash
-   LIBRESPOT_BACKEND="alsa"
-   LIBRESPOT_DEVICE="default"
-   LIBRESPOT_MIXER="softvol"
-   ```
-   Save and restart raspotify:
-   ```bash
-   sudo systemctl restart raspotify
-   ```
+`~/.config/pipewire/pipewire.conf.d/99-echo-cancel.conf`:
+
+```
+context.modules = [
+  {
+    name = libpipewire-module-echo-cancel
+    args = {
+      library.name = "aec/libspa-aec-webrtc"
+      audio.rate = 48000
+      audio.channels = 1
+      audio.position = [ MONO ]
+      webrtc.high_pass_filter = true
+      webrtc.noise_suppression = true
+      webrtc.voice_detection = false
+      webrtc.gain_control = false
+      webrtc.extended_filter = false
+      capture.props = {
+        node.name = "aec_capture"
+        target.object = "alsa:acp:seeed2micvoicec:2:capture"
+        audio.channels = 2
+        audio.position = [ FL FR ]
+        node.force-rate = 48000
+        node.force-quantum = 480
+      }
+      source.props = {
+        node.name = "aec_input"
+        node.description = "Echo-Cancelled Mono Mic"
+        media.class = "Audio/Source"
+        audio.channels = 1
+        audio.position = [ MONO ]
+        priority.driver = 1500
+        priority.session = 1500
+      }
+      sink.props = {
+        node.name = "aec_output"
+        node.description = "Echo-Cancel Mono Reference"
+        media.class = "Audio/Sink"
+        audio.channels = 1
+        audio.position = [ MONO ]
+        priority.driver = 1500
+        priority.session = 1500
+      }
+      playback.props = {
+        node.name = "aec_playback"
+        target.object = "alsa_output.platform-soc_sound.stereo-fallback"
+        audio.channels = 1
+        audio.position = [ MONO ]
+        node.force-rate = 48000
+        node.force-quantum = 480
+      }
+    }
+  }
+]
+```
+
+**Important:** the hardware mic capture stays **stereo** (2 channels) — the ReSpeaker HAT has two physical mics and ALSA exposes them as a stereo source; AEC reads stereo and downmixes internally to mono. Everything else in the chain is mono.
+
+### Playback Limiter (Driver Protection + AEC Quality at High Volume)
+
+`~/.config/pipewire/pipewire.conf.d/10-speaker-limiter.conf`:
+
+```
+context.modules = [
+  { name = libpipewire-module-filter-chain
+    args = {
+      node.description = "Speaker Limiter"
+      media.name       = "Speaker Limiter"
+      filter.graph = {
+        nodes = [
+          {
+            type  = builtin
+            name  = limiter
+            label = max_ge
+            control = {
+              "Max" = 0.5
+            }
+          }
+        ]
+      }
+      capture.props = {
+        node.name      = "limiter_input"
+        media.class    = Audio/Sink
+        audio.channels = 1
+        audio.position = [ MONO ]
+      }
+      playback.props = {
+        node.name      = "limiter_output"
+        node.passive   = true
+        audio.channels = 1
+        audio.position = [ MONO ]
+        target.object  = "aec_output"
+      }
+    }
+  }
+]
+```
+
+This uses **PipeWire's built-in `max_ge` limiter** — no external packages needed. `Max` is the linear amplitude ceiling:
+
+| `Max` value | Ceiling | Loudness loss vs. unity |
+|---|---|---|
+| 1.0 | 0 dBFS (off) | none |
+| 0.707 | −3 dB | ~3 dB |
+| 0.5 | −6 dB | ~6 dB |
+| 0.354 | −9 dB | ~9 dB |
+| 0.25 | −12 dB | ~12 dB |
+
+**Tuning procedure:**
+
+1. Start at `"Max" = 0.5` (−6 dB).
+2. Play test audio at full source volume.
+3. If clean → raise toward `0.7` or `0.8`.
+4. If distorted → lower to `0.354` or `0.25`.
+5. Find the highest ceiling that keeps AEC working at full volume.
+
+Each edit requires `systemctl --user restart pipewire pipewire-pulse wireplumber`.
+
+### Optional: High-Pass Filter Before Limiter
+
+If the limiter alone isn't enough at high volume, add a high-pass filter ahead of it. Modify the `filter.graph` block:
+
+```
+filter.graph = {
+  nodes = [
+    {
+      type   = builtin
+      name   = hpf
+      label  = bq_highpass
+      control = { Freq = 150.0  Q = 0.707 }
+    }
+    {
+      type  = builtin
+      name  = limiter
+      label = max_ge
+      control = { "Max" = 0.5 }
+    }
+  ]
+  links = [
+    { output = "hpf:Out"  input = "limiter:In" }
+  ]
+}
+```
+
+A 150 Hz second-order Butterworth HPF removes deep bass that the small driver can't reproduce cleanly anyway and dramatically reduces cone excursion. For voice/notification use this is inaudible except as cleaner output at high volume.
+
+### Routing
+
+The default playback sink should be `limiter_input` (apps → limiter → AEC → speaker). The default recording source should be `aec_input` (cleaned mic).
+
+```bash
+wpctl status   # find node IDs
+wpctl set-default <limiter_input_ID>
+wpctl set-default <aec_input_ID>
+```
+
+Defaults persist in `~/.local/state/wireplumber/default-nodes`.
+
+### Verifying the Routing
+
+```bash
+pw-link --links | grep -E 'limiter|aec|alsa'
+```
+
+The expected chain:
+
+```
+limiter_output → aec_output (AEC sink)
+aec_playback → alsa_output (HAT speaker)
+alsa_input (HAT mic) → aec_capture
+```
+
+`pw-top` shows live sample rates; verify all nodes run at 48 000 Hz with no resampling between stages.
+
+## Testing & Validation
+
+### Acoustic / Build Verification
+
+1. **Pressure-leak test:** seal the speaker hole with your hand, press gently on the speaker sub-enclosure. Pressure should release slowly. Quick release = leak.
+2. **Tap test:** with everything assembled, tap the bottom bowl. The disk/Pi/mic assembly above should feel *noticeably deader* than the bowl — confirms isolation is working.
+3. **Pink noise sweep:** `play -n -c 1 synth 30 pinknoise` (requires `sox`). Listen around the enclosure for buzzes, leaks, and rattles — pink noise reveals problems music masks.
+
+### AEC Performance Verification
+
+```bash
+# Terminal 1 — play continuous tone through the full chain:
+play -n synth 30 sine 1000
+
+# Terminal 2 — record AEC output:
+pw-record --target=aec_input aec_test.wav
+# wait ~10 seconds, Ctrl+C, then:
+pw-play aec_test.wav
+```
+
+The 1 kHz tone should be heavily attenuated in the recording. Repeat at progressively higher volumes; the level at which residual playback becomes audible defines your current AEC headroom.
+
+### Thermal Verification
+
+```bash
+# Under sustained CPU load (e.g., audio processing):
+watch -n 2 vcgencmd measure_temp
+```
+
+Pi Zero 2W should stabilize below ~70 °C under load. If it climbs higher, the disk's heatsinking isn't carrying enough heat — check thermal pad contact pressure and consider adding a small thermal gap-pad path from disk to the bottom shell.
+
+## Vibration Bypass Paths — Pre-Build Checklist
+
+The 4-TPU-pad soft mount only works if it's the **only** path from speaker to disk. Verify before final assembly:
+
+- [ ] Disk rim is **not** rigidly bonded to the outer shell (use T-7000's compliance, not rigid epoxy).
+- [ ] No metal-to-metal screws connect any rigid component on the disk-side to any rigid component on the speaker-side.
+- [ ] Wires crossing the boundary are thin, slack, and have service loops.
+- [ ] No felt, foam, or any material **bridges the gap** between the speaker sub-enclosure and the disk underside. Air gap only.
+- [ ] All 4 pad seats are coplanar (within 0.1 mm).
+- [ ] T-7000 has cured under load for at least 12 hours before measurement.
+
+## Materials Summary
+
+| Material | Used for | Why |
+|---|---|---|
+| PLA (or PETG if hot) | All rigid shell parts | Stiff, easy to print, sufficient mass at 3 mm walls and 30–40 % infill. |
+| TPU 85A | Soft mount pads, mic tunnels, PCB feet, magnet pads, driver gasket | Compliant, lossy, printable, tuneable via infill %. |
+| Stainless steel disk, 4 mm | Mid-divider | Mass loading, mic platform, Pi heatsink, acoustic separation. |
+| T-7000 adhesive | Disk-to-shell, pads-to-enclosure, general flexible bonds | Stays flexible after cure; airtight; doesn't short out compliance. |
+| Butyl rubber sheet (optional) | Interior lining of bottom bowl | Highly lossy panel damping. |
+| Polyester fill (small amount) | Interior of sealed speaker box | Damps internal standing waves. |
+| Thermal pad/paste | Pi SoC ↔ disk interface | Heat transfer; the only place hard contact is wanted. |
+
+## Why This Design (Key Decisions Recap)
+
+**Why sealed instead of bass-reflex?** Empirically sounded best in testing. With Vb ≈ 90 cm³ behind a 40 mm driver whose Vas is larger, the system is compliance-limited regardless of porting. Sealed has gentler impulse response, no port ringing, no port chuffing at high level — all of which makes AEC's job easier.
+
+**Why a sealed speaker sub-enclosure instead of just sealing the bottom shell?** A separate sub-enclosure provides a controlled air-spring load on the driver, limiting cone excursion at low frequencies (where excursion is highest). Excursion past the linear range is the main mechanism by which AEC fails at higher volume. This is the same trick the Echo Dot uses.
+
+**Why hard-mount the Pi if everything else is decoupled?** The Pi has no moving parts and produces essentially no vibration. Hard mounting gives best thermal contact for heatsinking through the disk, and doesn't compromise anything — because the *disk* is the thing being isolated, not the Pi.
+
+**Why is the steel disk both the heatsink and the mic platform?** Because once it's isolated from the speaker via the 4 TPU pads, it's a quiet rigid mass — ideal for mics (no vibration) and for heatsinking (large area, high conductivity). Wearing both hats.
+
+**Why printed TPU pads instead of nano tape or foam?** Tuneable via infill %, doesn't creep significantly under load like nano tape, doesn't compression-set like foam/felt, prints cleanly, bonds with T-7000. Permanent rather than prototype.
+
+**Why 4 pads, not 3 or 6?** 3 is the minimum for a defined plane but vulnerable to tilt/seesaw under uneven loading. 4 is stable against tilt with widely spaced anchoring. More than 4 increases total stiffness (parallel springs), raising f₀ and *reducing* isolation — no benefit.
+
+**Why no felt bridging the gap?** Any material touching both sides of the isolation gap acts as a parallel mechanical spring (k_total = k_pads + k_felt), raising f₀ and reducing isolation. The empty air gap is doing essential work. Felt belongs *inside* chambers or lining one surface only — never across the isolation boundary.
