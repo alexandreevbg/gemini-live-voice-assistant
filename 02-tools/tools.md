@@ -41,8 +41,7 @@ Mount an external drive to store the image and run backup
    sudo mount -t nfs -o proto=tcp,port=2049 <NAS IP address>/<target directory> /mnt
    sudo image-backup -o -v
    ```
-   After running the command, enter the name of the target image to /mnt/image_name.img, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less or about than 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. 
-   Then, you can flash the image by Raspberry Pi Imager from the resulting or compressed image. 
+   After running the command, enter the name of the target image to /mnt/image_name.img, then answer with [OK] and 'y' to the subsequent questions. The resulting image is typically less than or about 4 GB. You may compress it using 7-Zip to a *.img.xz file with a size of less than 1 GB. Then, you can flash the image by Raspberry Pi Imager from the resulting or compressed image. 
 
 ---
 

@@ -70,8 +70,9 @@ context.modules = [
 
       capture.props = {
         node.name = "aec_capture"
-        # Use the platform-soc name for better stability across kernel updates
-        target.object = "alsa_input.platform-soc_sound.analog-stereo"
+        # This MUST match the real ALSA node name from `wpctl status` / `pw-link -lo`.
+        # On this hardware the active profile names it "stereo-fallback" (not "analog-stereo").
+        target.object = "alsa_input.platform-soc_sound.stereo-fallback"
         
         # Hardware stays Stereo to keep driver happy
         audio.channels = 2
@@ -99,7 +100,8 @@ context.modules = [
 	  }
       playback.props = {
         node.name = "aec_playback"
-        target.object = "alsa_output.platform-soc_sound.analog-stereo"
+        # MUST match the real ALSA node name (see note in capture.props above).
+        target.object = "alsa_output.platform-soc_sound.stereo-fallback"
         # Playback remains Mono (PipeWire will mix it to the single speaker)
         audio.channels = 1
         audio.position = [ MONO ]
@@ -144,7 +146,6 @@ ls -l /usr/lib/ladspa/sc4m_1916.so
 ```
 > **Note**: On 64-bit systems the plugin may instead live under an arch-specific path. If the command above fails, check `/usr/lib/aarch64-linux-gnu/ladspa/` and set `LADSPA_PATH` accordingly so PipeWire can find it.
 
-Create the filter-chain config. Drop-in files load in **alphabetical** order, so the `95-` prefix loads it **after** `90-echo-cancel.conf` (numeric-looking prefixes are sorted as strings — `100` would sort *before* `99`, so keep the digit counts equal):
 ```bash
 nano ~/.config/pipewire/pipewire.conf.d/95-limiter.conf
 ```
@@ -201,10 +202,16 @@ context.modules = [
 ```
 > **Tuning:** For hard **clip protection** (brick-wall behaviour, keeps the amp out of distortion) set `"Ratio (1:n)" = 20.0`, `"Threshold level (dB)" = -6.0`, and `"Makeup gain (dB)" = 0.0`. For **loudness consistency** (voice assistant), use a lower ratio (3–6) with a few dB of makeup gain as above.
 
-> **Default sink:** Once this is running, make `limiter_sink` the default output **instead of** `aec_output` (see section 6), so application audio flows through the limiter:
+> **⚠ Verify the routing after restart.** With both this filter and the AEC active, the graph must form the chain `limiter_sink → aec_output → aec_playback → hardware`. Confirm the links — *not* just that nodes exist:
 > ```bash
-> wpctl set-default <limiter_sink ID>
+> pw-link -lo
 > ```
+> You must see exactly these connections:
+> ```text
+> limiter_playback:output_MONO   -> aec_output:playback_MONO                    # limiter feeds the AEC reference
+> aec_playback:output_MONO       -> alsa_output.platform-soc_sound.<profile>... # AEC feeds the speaker
+> ```
+> If instead `aec_playback` connects to `limiter_sink`, or `limiter_playback` connects to the hardware, the chain is inverted — the AEC reference is silent and echo will **not** be cancelled. That happens when `aec_playback`'s `target.object` does not match the real hardware node name (see section 2). Both `target.object` values must resolve, otherwise WirePlumber falls back to default-sink routing and creates this inversion (or even a feedback loop).
 
 ## 4. Wipe the cached state and start fresh
 
@@ -222,28 +229,28 @@ pw-metadata -n settings 0 clock.force-quantum 480
 ```
 
 ## 6. Check and set the default audio nodes
-Identify the IDs for `aec_input` and `aec_output` and set them as default.
-> **Note**: This step is critical. WirePlumber may default back to the hardware nodes until you manually "lock" the defaults. This setting is saved persistently in `~/.local/state/wireplumber/`.
-
+Identify the IDs for `aec_input` and `limiter_sink` and set them as default.
 ```bash
-wpctl status # Look for aec_input and aec_output IDs
+wpctl status
 ```
-Expected results
+Expected results like
 ```text
 # ├─ Filters:
-# │    - echo-cancel-XXXX-30
-# │      XX. aec_capture    [Stream/Input/Audio]
-# │  *   XX. aec_input      [Audio/Source]
-# │  *   XX. aec_output     [Audio/Sink]
-# │      XX. aec_playback   [Stream/Output/Audio]
+# │    - echo-cancel-1962-30
+# │      39. aec_capture          [Stream/Input/Audio]
+# │  *   40. aec_input            [Audio/Source]
+ #│      41. aec_output           [Audio/Sink]
+ #│      42. aec_playback         [Stream/Output/Audio]
+ #│    - filter-chain-1962-31
+ #│  *   43. limiter_sink         [Audio/Sink]
+ #│      44. limiter_playback     [Stream/Output/Audio]
 ```
-If the '*' are missing, manually set the default nodes (replace 38 and 39 with actual IDs):
-```bash 
-wpctl set-default 38	# aec_input
-wpctl set-default 39	# aec_output
-```
-> **Note**: With the output limiter from section 3 in place, set `limiter_sink` as the default output **instead of** `aec_output`, so playback flows `limiter_sink → aec_output → speaker`.
 
+If the '*' are missing or on different lines, then manually set the default nodes (replace 40 and 43 with actual IDs):
+```bash 
+wpctl set-default 40	# aec_input
+wpctl set-default 43	# limiter_sink
+```
 Reboot the system to ensure all changes are applied correctly.
 ```bash
 sudo reboot
