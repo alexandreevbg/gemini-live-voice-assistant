@@ -58,15 +58,18 @@ context.modules = [
       audio.position = [ MONO ]
 
       webrtc.high_pass_filter = true
-      webrtc.noise_suppression = true
+      webrtc.noise_suppression = true       # rejects ambient room noise (helps the wake-word detector)
       webrtc.voice_detection = false
-      webrtc.gain_control = true
-      webrtc.experimental_agc = true
+      # AGC off: it pumped the gain and dropped quiet syllables. Keep capture level fixed instead.
+      webrtc.gain_control = false
+      webrtc.experimental_agc = false
       webrtc.limiter = true
-      webrtc.extended_filter = true
-      webrtc.delay_agnostic = true
-      webrtc.experimental_ns = true
-      webrtc.transient_suppression = true
+      webrtc.extended_filter = true         # models the longer echo tail
+      # delay_agnostic off: speaker+mic share a fixed-latency board, so constant delay
+      # re-estimation only caused spectral "wobble". A fixed path converges far cleaner.
+      webrtc.delay_agnostic = false
+      webrtc.experimental_ns = false        # second NS stage gated quiet speech
+      webrtc.transient_suppression = false  # was clipping word onsets
 
       capture.props = {
         node.name = "aec_capture"
