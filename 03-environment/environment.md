@@ -205,6 +205,11 @@ context.modules = [
 ```
 > **Tuning:** For hard **clip protection** (brick-wall behaviour, keeps the amp out of distortion) set `"Ratio (1:n)" = 20.0`, `"Threshold level (dB)" = -6.0`, and `"Makeup gain (dB)" = 0.0`. For **loudness consistency** (voice assistant), use a lower ratio (3–6) with a few dB of makeup gain as above.
 
+> Reboot
+```bash
+sudo reboot
+```
+
 > **⚠ Verify the routing after restart.** With both this filter and the AEC active, the graph must form the chain `limiter_sink → aec_output → aec_playback → hardware`. Confirm the links — *not* just that nodes exist:
 > ```bash
 > pw-link -lo
@@ -313,7 +318,7 @@ killall pw-play pw-record
 sleep 2
 pw-play test.wav
 ```
-Run als0amixer in terminal 2, select card 0 "seeed2mic..." and find the max volume of Line DAC slider, while when the above test is working well.
+Run alsaamixer in terminal 2, select card 0 "seeed2mic..." and find the max volume of Line DAC slider, while when the above test is working well.
 
 ---
 [Return to Main README](../README.md)

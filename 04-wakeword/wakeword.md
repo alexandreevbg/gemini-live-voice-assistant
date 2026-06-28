@@ -49,7 +49,7 @@ wget https://github.com/dscripka/openWakeWord/archive/refs/tags/v0.6.0.zip -O op
 unzip openWakeWord-0.6.0.zip
 cd openWakeWord-0.6.0
 ```
-Patch `setup.py`
+Patch `setup.py` to use `ai-edge-litert` instead of `tflite-runtime`
 ```bash
 sed -i -E "s|^([[:space:]]*)'tflite-runtime[^']*'(.*)$|\1'ai-edge-litert; platform_system == \"Linux\"'\2|" setup.py
 ```
@@ -59,14 +59,16 @@ pip install .
 ```
 
 ### 6. Patch openWakeWord Source Files
-The `ai-edge-litert` API differs slightly from `tflite-runtime`. In files model.py and utils.py:
+The `ai-edge-litert` API differs slightly from `tflite-runtime`, so that:
 ```python
 # Change:
 import tflite_runtime.interpreter as tflite
 # with
 from ai_edge_litert.interpreter import Interpreter as tflite
 ```
-This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. The import itself and three related calls need fixing. You can use nano or the following script:
+This makes `tflite` the `Interpreter` class itself — so calling `tflite.Interpreter(...)` means `Interpreter.Interpreter(...)`, which doesn't exist. 
+
+The import itself and the three related calls need fixing. You can use nano or the following script:
 ```bash
 cd ~/.venv/lib/python3.13/site-packages/openwakeword
 sed -i "s|import tflite_runtime.interpreter as tflite|from ai_edge_litert.interpreter import Interpreter as tflite|" model.py utils.py
@@ -82,7 +84,7 @@ python -c "from openwakeword.utils import download_models; download_models()"
 
 Models are saved to:
 ```
-~/.venv/lib/python3.13/site-packages/openwakeword/resources/models/
+ls -l ~/.venv/lib/python3.13/site-packages/openwakeword/resources/models/
 ```
 
 Required base models:
@@ -151,7 +153,7 @@ Once you find a piper voice model for your language, use the appropriate Python 
 - store the script at a URL accessible from the Google Colab environment (e.g. Github Gist)
 - run the notebook stored in the same directory
 
-The current notebook and generate_samples.py in the **02-wakeword** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
+The current notebook and generate_samples.py in the **04-wakeword** directory are prepared for Bulgarian (bg-BG) language. To use it with another language, run the same notebook and then:
 - click on [Show code](#2-train-a-custom-wake-word-model) at the end of the first cell
 - find the line starting with "!wget "https://raw.githubusercontent.com/..."
 - replace the link on this line with the link to your URL containing your generate_samples.py script
@@ -159,7 +161,7 @@ The current notebook and generate_samples.py in the **02-wakeword** directory ar
 - run all cells and download the generated tflite model
 - save a copy of the modified notebook and rename it as you want
 
-To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/training/OpenWakeWord_model_BG.ipynb)
+To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/04-wakeword/OpenWakeWord_model_BG.ipynb)
 
 In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word in non-English into the model filename.
 
