@@ -166,9 +166,36 @@ To run the Bulgarian training notebook directly in Google Colab: [![Open In Cola
 In addition to the `target_word` field, the notebook includes a `target_model_name` field to prevent the automatic conversion of the target word in non-English into the model filename.
 
 ## Obtain Micro Wake Word Model
-Currently, except the built-in, a collection of pre-trained models is available on https://github.com/TaterTotterson/microWakeWords. 
+As with openWakeWord, there are three options: use a pre-trained model, or train your own in English or in a non-English language.
 
-A notebook for training new custom models is available on https://github.com/OHF-Voice/micro-wake-word/blob/november-update/notebooks/basic_training_notebook.ipynb.
+### 1. Use a pre-trained model
+Besides the built-in wake words, a collection of community pre-trained models is available in the following [repository](https://github.com/TaterTotterson/microWakeWords). The official ESPHome models live in the [micro-wake-word-models repo](https://github.com/esphome/micro-wake-word-models/tree/main/models/v2).
+
+### 2. Train a custom wake word in English
+The official training notebook is available on [GitHub](https://github.com/OHF-Voice/micro-wake-word/blob/november-update/notebooks/basic_training_notebook.ipynb). A copy is kept in the **04-wakeword/** directory as **MicroWakeWord_model.ipynb**.
+
+> Training is **very** slow on CPU — set the Colab runtime to a **GPU** (Runtime → Change runtime type). Note that the install cell asks you to **restart the session** before continuing.
+
+The notebook produces a quantized streaming model at
+`trained_models/wakeword/tflite_stream_state_internal_quant/stream_state_internal_quant.tflite`.
+To use it in ESPHome you must also write a small JSON model manifest — see the [ESPHome documentation](https://esphome.io/components/micro_wake_word) and the [model repo examples](https://github.com/esphome/micro-wake-word-models/tree/main/models/v2).
+
+### 3. Train a custom wake word in other languages
+Unlike the custom Keras experiments, this keeps microWakeWord's real training pipeline (`microwakeword.model_train_eval` → mixednet → quantized streaming tflite), so the result loads in ESPHome's `micro_wake_word` component. In the **04-wakeword/** directory you will find **MicroWakeWord_model_BG.ipynb**, prepared for Bulgarian (bg-BG).
+
+It reuses the same `generate_samples.py` patch described in the openWakeWord section above (the script defaults to the Piper **bg_BG-dimitar-medium** voice, which it auto-downloads, and phonemizes Cyrillic text via espeak `bg`). Only the sample-generation cells differ from the official English notebook; everything downstream — augmentation, spectrograms, negative datasets, training, and tflite export — is identical and language-agnostic. The English negative-speech datasets are kept on purpose: they teach the model not to fire on general speech.
+
+To adapt it to another language supported by Piper, follow the same steps as for openWakeWord:
+- make a local copy of the appropriate generate-samples script and rename it to `generate_samples.py`
+- replace the model name in the script with the Piper voice for your language
+- store the script at a URL accessible from Colab (e.g. a GitHub Gist)
+- in the sample-generation cell, replace the link on the line starting with `!wget "https://raw.githubusercontent.com/..."` with the link to your script
+- run the cell to create and listen to a test example, then run all cells and download the generated tflite model
+- save a copy of the modified notebook and rename it as you want
+
+To run the Bulgarian training notebook directly in Google Colab: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexandreevbg/gemini-live-voice-assistant/blob/main/04-wakeword/MicroWakeWord_model_BG.ipynb)
+
+> The Colab badge requires the notebook to be committed to the `alexandreevbg/gemini-live-voice-assistant` repository under `04-wakeword/`.
 
 ---
 [Return to Main README](../README.md)
