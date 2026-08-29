@@ -1,0 +1,11 @@
+# Avoid commit the following directories and files
+00-resources/
+.vscode/
+.claude/
+.idea/
+.venv/
+.git/
+
+# Google Cloud service account keys (e.g. gen-lang-client-*.json)
+gen-lang-client-*.json
+*service-account*.json
